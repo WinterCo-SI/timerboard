@@ -164,8 +164,17 @@ export const useTimerboard = defineStore('timerboard', () => {
       }
 
       const payload = (await response.json()) as TimerSnapshotPayload | Partial<Timer>[];
+      // Debug: surface unexpected payload shapes when no timers are applied
+      if (import.meta.env.MODE !== 'production') {
+        // eslint-disable-next-line no-console
+        console.debug('[useTimerboard] fetchRemoteSnapshot:', { url: TIMER_API_URL, status: response.status, payload });
+      }
       const extracted = extractTimersPayload(payload);
-      if (!Array.isArray(payload) && !extracted.length) return;
+      if (!Array.isArray(payload) && !extracted.length) {
+        importStatus.value = 'Timer API returned no timers (unexpected payload shape).';
+        return;
+      }
+
       setTimersFromRemote(Array.isArray(payload) ? payload : extracted);
       importStatus.value = `Synced ${timers.value.length} timer(s) from API.`;
     } catch {
