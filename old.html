@@ -1,0 +1,4831 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; script-src 'self' 'nonce-timerboard-app'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';">
+<title>Structure Timerboard</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23111418'/%3E%3Cpath d='M12 16h18c13 0 22 7 22 16s-9 16-22 16H12V16zm10 9v14h8c7 0 11-3 11-7s-4-7-11-7h-8z' fill='%233d9e6a'/%3E%3Cpath d='M38 16h16v9h-7v23h-9V25h-7v-9h7z' fill='%23d4dce8'/%3E%3C/svg%3E">
+<style>
+/* ── DARK THEME ── */
+:root {
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Cascadia Mono", "Consolas", "Liberation Mono", monospace;
+  --bg:         #111418;
+  --bg-surface: #181c22;
+  --bg-hover:   #222830;
+  --bg-header:  #161a20;
+  --morning:    rgba(59,105,180,0.12);
+  --afternoon:  rgba(160,120,40,0.10);
+  --evening:    rgba(90,50,140,0.12);
+  --border:     #2a3040;
+  --border-mid: #333d50;
+  --text-1: #d4dce8;
+  --text-2:     #b7c7da;
+  --text-3:     #8fa3bb;
+  --green:  #3d9e6a;
+  --red:    #c0404a;
+  --amber:  #b07a20;
+  --yellow: #9a8a30;
+  --blue:   #3a70b0;
+  --purple: #6a4fa0;
+}
+/* ── LIGHT THEME ── */
+[data-theme="light"] {
+  --bg:         #f7f7f8;
+  --bg-surface: #f0eefc;
+  --bg-hover:   #e3def8;
+  --bg-header:  #eae7f7;
+  --morning:    rgba(59,130,246,0.12);
+  --afternoon:  rgba(217,119,6,0.13);
+  --evening:    rgba(139,92,246,0.12);
+  --border:     #cbc4e7;
+  --border-mid: #a99ed4;
+  --text-1: #18181b;
+  --text-2: #3f3f46;
+  --text-3: #64606f;
+  --green:  #2f8f6b;
+  --red:    #d44a3a;
+  --amber:  #b7791f;
+  --yellow: #8c6d1f;
+  --blue:   #2563eb;
+  --purple: #7c3aed;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text-1);font-family:var(--font-sans);font-size:14px;min-height:100vh;transition:background .2s,color .2s;}
+.app-wrap{max-width:1400px;margin:0 auto;padding:16px;}
+
+/* ── HEADER ── */
+.header{display:grid;grid-template-columns:minmax(190px,auto) 1fr auto;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border-mid);gap:12px;}
+.header-left{display:flex;align-items:center;gap:14px;min-width:0;}
+.brand-btn{display:flex;align-items:center;gap:8px;background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:3px 4px;margin:-3px -4px;border-radius:4px;text-align:left;}
+.brand-btn:hover{background:var(--bg-hover);}
+.brand-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+.brand-logo{width:28px;height:28px;border-radius:6px;flex:0 0 auto;box-shadow:0 0 0 1px var(--border);}
+.brand-copy{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;}
+.title{font-size:15px;font-weight:600;color:var(--text-1);}
+.subtitle{font-size:10px;color:var(--text-3);margin-top:2px;font-family:var(--font-mono);}
+.home-hint{display:none;}
+.subtitle::after{content:' · Back to table';color:var(--blue);visibility:hidden;}
+.brand-btn.can-return .subtitle::after{visibility:visible;}
+.header-nav{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;min-width:0;}
+.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap;}
+.live-clock{font-family:var(--font-mono);font-size:14px;font-weight:500;color:var(--text-2);}
+.clock-label{font-size:9px;color:var(--text-3);text-align:right;}
+.clock-box{min-width:74px;text-align:right;}
+#themeIcon:empty{display:none;}
+
+/* ── TOOLBAR BUTTONS ── */
+.tool-btn{display:inline-flex;align-items:center;gap:5px;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-2);font-family:var(--font-sans);font-size:11px;font-weight:500;padding:4px 9px;cursor:pointer;border-radius:3px;transition:all .1s;white-space:nowrap;}
+.tool-btn:hover{border-color:var(--border-mid);color:var(--text-1);}
+.tool-btn.active{border-color:var(--border-mid);color:var(--text-1);background:var(--bg-hover);}
+.btn-sep{width:1px;height:20px;background:var(--border);margin:0 2px;}
+
+/* View mode buttons */
+.view-btn{font-size:13px;position:relative;padding-left:12px;}
+.view-btn.active{
+  border-color:var(--green);
+  color:var(--text-1);
+  background:rgba(61,158,106,.16);
+  box-shadow:inset 3px 0 0 var(--green);
+}
+.view-btn.active::before{
+  content:'';
+  width:3px;
+  height:13px;
+  border-radius:2px;
+  background:var(--green);
+  flex:0 0 auto;
+}
+[data-theme="light"] .view-btn.active{
+  background:rgba(47,143,107,.14);
+  box-shadow:inset 3px 0 0 var(--green);
+}
+
+/* ── STATS ── */
+.stats-bar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.stat-chip{background:var(--bg-surface);border:1px solid var(--border);padding:6px 12px;border-radius:3px;min-width:80px;}
+.stat-value{font-family:var(--font-mono);font-size:16px;font-weight:500;color:var(--text-1);line-height:1;margin-bottom:2px;}
+.stat-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:.02em;}
+.stat-chip.s-ours   .stat-value{color:var(--green);}
+.stat-chip.s-theirs .stat-value{color:var(--red);}
+.stat-chip.s-major  .stat-value{color:var(--amber);}
+
+
+/* ── STRUCTURE FILTER DROPDOWN ── */
+.struct-dd{position:relative;display:inline-block;}
+.struct-dd > summary{list-style:none;}
+.struct-dd > summary::-webkit-details-marker{display:none;}
+.struct-menu{position:absolute;top:38px;left:0;min-width:220px;max-height:320px;overflow:auto;background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:10px;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.25);}
+.struct-menu-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.struct-menu-title{font-size:12px;font-weight:700;color:var(--text-1);}
+.struct-options{display:flex;flex-direction:column;gap:6px;}
+.struct-opt{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-1);cursor:pointer;}
+.struct-opt input{accent-color: var(--green);}
+
+/* ── TIMELINE BAR ── */
+.timeline-wrap{margin-bottom:10px;}
+.timeline-bar{position:relative;height:26px;background:var(--bg-surface);border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+.timeline-fill{position:absolute;left:0;top:0;bottom:0;background:rgba(58,112,176,.15);border-right:2px solid var(--blue);transition:width 1s linear;}
+[data-theme="light"] .timeline-fill{background:rgba(37,99,235,.18);}
+.timeline-now-label{position:absolute;top:50%;transform:translate(-50%,-50%);font-family:var(--font-mono);font-size:10px;font-weight:500;color:var(--blue);background:var(--bg-surface);padding:1px 4px;border:1px solid var(--blue);border-radius:2px;white-space:nowrap;pointer-events:none;z-index:2;}
+.timeline-tick{position:absolute;top:0;bottom:0;width:1px;background:var(--border);pointer-events:none;}
+.timeline-tick-label{position:absolute;bottom:2px;font-family:var(--font-mono);font-size:8px;color:var(--text-3);transform:translateX(-50%);pointer-events:none;z-index:1;}
+.timeline-meta{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--text-3);padding:2px 2px 0;}
+.timeline-elapsed-count span{color:var(--red);}
+
+/* ── FILTER + DAY NAV ── */
+.controls{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;flex-wrap:wrap;padding:8px;background:rgba(255,255,255,.015);border:1px solid var(--border);border-radius:6px;}
+.filter-label{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.03em;margin-right:2px;}
+.filter-group{display:flex;align-items:center;gap:5px;flex-wrap:wrap;border:0;margin:0;padding:0;}
+.filter-group > summary{display:none;list-style:none;}
+.filter-group > summary::-webkit-details-marker{display:none;}
+.filter-group-label{align-self:center;font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.03em;margin-right:1px;}
+.filter-group-body{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.filter-reset{display:flex;align-items:center;margin-top:14px;}
+.active-filters{display:none;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 10px;padding:6px 8px;background:rgba(61,158,106,.06);border:1px solid rgba(61,158,106,.26);border-radius:4px;}
+.active-filters.has-filters{display:flex;}
+.active-filter-label{font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:.03em;font-weight:700;margin-right:2px;}
+.filter-chip{display:inline-flex;align-items:center;gap:5px;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-2);font-size:11px;font-weight:600;padding:3px 8px;border-radius:3px;cursor:pointer;}
+.filter-chip:hover{border-color:var(--border-mid);color:var(--text-1);}
+.filter-chip::after{content:'x';font-family:var(--font-mono);font-size:10px;color:var(--text-3);}
+.day-nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
+.day-nav-btn{background:var(--bg-surface);border:1px solid var(--border);color:var(--text-2);font-family:var(--font-sans);font-size:11px;font-weight:500;padding:3px 9px;cursor:pointer;border-radius:3px;transition:all .1s;white-space:nowrap;}
+.day-nav-btn:hover{border-color:var(--border-mid);color:var(--text-1);}
+.day-nav-btn.is-today{border-color:var(--amber);color:var(--amber);}
+.day-nav-sep{display:flex;gap:4px;margin-left:auto;}
+
+@media(max-width:980px){
+  .header{grid-template-columns:1fr;align-items:stretch;}
+  .header-left{justify-content:space-between;}
+  .header-nav{justify-content:flex-start;}
+  .header-actions{justify-content:flex-start;}
+}
+@media(max-width:720px){
+  .app-wrap{padding:12px;}
+  .header-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;}
+  .view-btn{justify-content:center;padding:5px 6px;font-size:11px;}
+  .view-btn.active{box-shadow:inset 0 -3px 0 var(--green);}
+  .view-btn.active::before{display:none;}
+  .header-actions .tool-btn{flex:1 1 auto;justify-content:center;}
+  .controls{display:grid;grid-template-columns:1fr;gap:6px;}
+  .filter-label{display:none;}
+  .filter-group{display:block;border:1px solid var(--border);border-radius:4px;background:var(--bg-surface);}
+  .filter-group > summary{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;cursor:pointer;color:var(--text-2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+  .filter-group > summary::after{content:'+';font-family:var(--font-mono);color:var(--text-3);}
+  .filter-group[open] > summary::after{content:'-';}
+  .filter-group-label{display:none;}
+  .filter-group-body{padding:0 8px 8px;}
+  .filter-reset{display:inline-flex;margin-top:0;justify-content:center;}
+  .struct-menu{position:static;min-width:0;width:100%;max-height:260px;margin-top:6px;box-shadow:none;border-radius:4px;}
+  .day-nav-sep{width:100%;margin-left:0;}
+}
+
+/* ── DATE GROUP (TABLE VIEW) ── */
+.date-group{margin-bottom:18px;}
+.date-header{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;border-radius:3px;padding:3px 4px;margin:0 -4px 5px;transition:background .1s;}
+.date-header:hover{background:var(--bg-hover);}
+.date-chevron{font-size:10px;color:var(--text-3);transition:transform .18s;width:12px;text-align:center;flex-shrink:0;}
+.date-group.collapsed .date-chevron{transform:rotate(-90deg);}
+.date-label{font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;}
+.date-label.today{color:var(--amber);}
+.date-line{flex:1;height:1px;background:var(--border);}
+.date-count{font-family:var(--font-mono);font-size:9px;color:var(--text-3);}
+.date-body{overflow:hidden;transition:opacity .18s ease;max-height:none;opacity:1;}
+.date-group.collapsed .date-body{max-height:0;opacity:0;}
+
+/* ── TABLE ── */
+.timer-table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+.timer-table thead th{background:var(--bg-header);border-bottom:1px solid var(--border-mid);padding:5px 8px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--text-3);text-align:left;white-space:nowrap;}
+.timer-table tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+.timer-table tbody tr:last-child{border-bottom:none;}
+.timer-table tbody tr:hover td{background:var(--bg-hover)!important;}
+.timer-table tbody td{padding:6px 8px;vertical-align:middle;}
+tr.morning   td{background:var(--morning);}
+tr.afternoon td{background:var(--afternoon);}
+tr.evening   td{background:var(--evening);}
+tr.major td:first-child{border-left:5px solid #f2b84b;}
+tr.major .cell-time{color:#ffd166;font-weight:800;}
+tr.major .cell-system{font-weight:800;color:#7db7ff;}
+tr.major .cell-name{font-weight:800;}
+tr.hostile td{background:rgba(150,45,50,.08)!important;}
+tr.hostile:hover td{background:rgba(150,45,50,.14)!important;}
+tr.elapsed td{opacity:.38;}
+tr.elapsed .cell-time{text-decoration:line-through;text-decoration-color:var(--text-3);}
+
+/* ── LIGHT MODE TABLE OVERRIDES ── */
+[data-theme="light"] .timer-table thead th{background:var(--bg-header);color:var(--text-3);border-bottom-color:var(--border-mid);}
+[data-theme="light"] tr.morning   td{background:rgba(37,99,235,.10);}
+[data-theme="light"] tr.afternoon td{background:rgba(183,121,31,.13);}
+[data-theme="light"] tr.evening   td{background:rgba(124,58,237,.10);}
+[data-theme="light"] tr.major td{background-color:rgba(183,121,31,.18)!important;}
+[data-theme="light"] tr.major:hover td{background-color:rgba(183,121,31,.25)!important;}
+[data-theme="light"] tr.major td:first-child{border-left:4px solid var(--amber);}
+[data-theme="light"] tr.major .cell-time{font-weight:700;}
+[data-theme="light"] tr.major .cell-system{font-weight:600;}
+[data-theme="light"] tr.major .cell-name{font-weight:600;}
+[data-theme="light"] tr.hostile td{background:rgba(212,74,58,.12)!important;}
+[data-theme="light"] tr.hostile.major td{background-color:rgba(212,74,58,.18)!important;}
+[data-theme="light"] .cell-system{color:var(--blue);}
+[data-theme="light"] .countdown{color:var(--text-3);}
+[data-theme="light"] .cell-time{font-weight:600;}
+
+/* ── CELLS ── */
+.cell-time{font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--text-1);white-space:nowrap;}
+.countdown{font-family:var(--font-mono);font-size:10px;color:var(--text-3);margin-top:1px;}
+.countdown.soon{color:var(--amber);}
+.countdown.urgent{color:var(--red);}
+.cell-system{font-family:var(--font-mono);font-size:11px;color:var(--blue);white-space:nowrap;}
+.cell-name{font-size:12px;color:var(--text-1);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;}
+.major-star{font-size:14px;color:#ffd166;opacity:1;text-shadow:0 0 8px rgba(255,209,102,.45);}
+[data-theme="light"] .major-star{opacity:1;color:var(--amber);font-size:12px;}
+
+/* BADGES */
+.struct-badge{display:inline-block;font-size:10px;color:var(--text-2);background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:2px;padding:0 5px;white-space:nowrap;}
+.struct-badge.keepstar,.struct-badge.sotiyo,.struct-badge.fortizar{color:#ffd166;border-color:rgba(255,209,102,.62);background:rgba(255,209,102,.14);font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,209,102,.16);}
+[data-theme="light"] .struct-badge{background:rgba(124,58,237,.09);border-color:rgba(124,58,237,.28);color:var(--text-2);}
+[data-theme="light"] .struct-badge.keepstar,[data-theme="light"] .struct-badge.sotiyo,[data-theme="light"] .struct-badge.fortizar{background:rgba(183,121,31,.20);border-color:rgba(183,121,31,.50);color:var(--amber);font-weight:800;}
+
+.state-badge{display:inline-block;font-size:10px;border-radius:2px;padding:0 5px;border:1px solid;white-space:nowrap;}
+.state-badge.final {color:var(--green); border-color:rgba(60,150,100,.35);background:rgba(60,150,100,.07);}
+.state-badge.armor {color:var(--amber); border-color:rgba(175,120,30,.35);background:rgba(175,120,30,.07);}
+.state-badge.anchor{color:var(--yellow);border-color:rgba(150,140,40,.35);background:rgba(150,140,40,.07);}
+.state-badge.hull  {color:var(--red);  border-color:rgba(180,50,55,.35); background:rgba(180,50,55,.07);}
+[data-theme="light"] .state-badge.final {background:rgba(47,143,107,.18);border-color:rgba(47,143,107,.46);color:var(--green);}
+[data-theme="light"] .state-badge.armor {background:rgba(183,121,31,.18);border-color:rgba(183,121,31,.46);color:var(--amber);}
+[data-theme="light"] .state-badge.anchor{background:rgba(140,109,31,.18);border-color:rgba(140,109,31,.46);color:var(--yellow);}
+[data-theme="light"] .state-badge.hull  {background:rgba(212,74,58,.18);border-color:rgba(212,74,58,.46);color:var(--red);}
+
+.status-dot{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:500;}
+.status-dot::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.status-dot.ours   {color:var(--green);}
+.status-dot.ours::before   {background:var(--green);}
+.status-dot.theirs {color:var(--red);}
+.status-dot.theirs::before {background:var(--red);}
+
+.tod-pill{display:inline-block;width:18px;height:9px;border-radius:2px;vertical-align:middle;}
+.tod-pill.morning  {background:rgba(50,90,170,.40);}
+.tod-pill.afternoon{background:rgba(150,105,20,.45);}
+.tod-pill.evening  {background:rgba(80,40,130,.40);}
+[data-theme="light"] .tod-pill.morning  {background:rgba(37,99,235,.38);}
+[data-theme="light"] .tod-pill.afternoon{background:rgba(183,121,31,.38);}
+[data-theme="light"] .tod-pill.evening  {background:rgba(124,58,237,.36);}
+
+/* ══════════════════════════════════════
+   COMPACT CARD VIEW  (replaces old grid)
+══════════════════════════════════════ */
+.view-grid{display:none;}
+.view-grid.active-view{display:block;}
+
+.compact-section-header{
+  font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;
+  letter-spacing:.03em;padding:3px 0 5px;margin:14px 0 4px;
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;
+}
+.compact-section-header.today{color:var(--amber);}
+.compact-section-header .dsh-count{font-size:9px;color:var(--text-3);font-weight:400;font-family:var(--font-mono);}
+
+.compact-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:3px;
+  margin-bottom:4px;
+}
+
+/* Each card is ONE visual line */
+.dc{
+  display:flex;align-items:center;gap:5px;
+  background:var(--bg-surface);
+  border:1px solid var(--border);
+  border-left:3px solid transparent;
+  border-radius:2px;
+  padding:4px 7px;
+  min-width:0;
+  cursor:default;
+  transition:background .08s;
+  position:relative;
+}
+.dc:hover{background:var(--bg-hover);}
+
+/* Left accent by time-of-day */
+.dc.morning  {border-left-color:rgba(58,112,176,.5);}
+.dc.afternoon{border-left-color:rgba(176,122,32,.5);}
+.dc.evening  {border-left-color:rgba(106,79,160,.5);}
+
+/* Owner tint */
+.dc.hostile{background:rgba(150,45,50,.07);}
+[data-theme="light"] .dc.hostile{background:rgba(212,74,58,.12);}
+
+/* Elapsed */
+.dc.elapsed{opacity:.35;}
+
+/* MAJOR — stands out hard */
+.dc.major{
+  border-left-width:5px;
+  border-left-color:#ffd166;
+  background:rgba(255,209,102,.08);
+  box-shadow:inset 0 0 0 1px rgba(255,209,102,.10);
+}
+.dc.major:hover{background:rgba(255,209,102,.12);}
+[data-theme="light"] .dc.major{background:rgba(183,121,31,.18);border-left-color:var(--amber);}
+[data-theme="light"] .dc.major:hover{background:rgba(183,121,31,.25);}
+
+/* ── Card internals ── */
+.dc-star{font-size:12px;color:#ffd166;flex-shrink:0;line-height:1;text-shadow:0 0 8px rgba(255,209,102,.45);}
+[data-theme="light"] .dc-star{color:var(--amber);}
+
+.dc-time{
+  font-family:var(--font-sans);font-size:14px;font-weight:800;
+  color:var(--text-1);white-space:nowrap;flex-shrink:0;min-width:34px;
+}
+.dc.major .dc-time{color:#ffd166;}
+[data-theme="light"] .dc.major .dc-time{color:var(--amber);}
+
+.dc-system{
+  font-family:var(--font-sans);font-size:13px;color:var(--text-1);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;
+  font-weight:500;
+}
+[data-theme="light"] .dc-system{color:var(--blue);}
+
+.dc-badge{
+  font-size:9px;font-family:var(--font-sans);font-weight:500;
+  border:1px solid var(--border);border-radius:2px;padding:0 4px;
+  white-space:nowrap;flex-shrink:0;color:var(--text-2);
+  background:rgba(255,255,255,.03);
+}
+.dc-badge.keepstar,.dc-badge.sotiyo,.dc-badge.fortizar{color:#ffd166;border-color:rgba(255,209,102,.62);background:rgba(255,209,102,.14);font-weight:800;}
+[data-theme="light"] .dc-badge{background:rgba(124,58,237,.09);border-color:rgba(124,58,237,.28);color:var(--text-2);}
+[data-theme="light"] .dc-badge.keepstar,[data-theme="light"] .dc-badge.sotiyo,[data-theme="light"] .dc-badge.fortizar{background:rgba(183,121,31,.20);border-color:rgba(183,121,31,.50);color:var(--amber);font-weight:800;}
+
+.dc-state{
+  font-size:9px;border-radius:2px;padding:0 4px;border:1px solid;
+  white-space:nowrap;flex-shrink:0;font-family:var(--font-sans);
+}
+.dc-state.final {color:var(--green); border-color:rgba(60,150,100,.4); background:rgba(60,150,100,.08);}
+.dc-state.armor {color:var(--amber); border-color:rgba(175,120,30,.4); background:rgba(175,120,30,.08);}
+.dc-state.anchor{color:var(--yellow);border-color:rgba(150,140,40,.4); background:rgba(150,140,40,.08);}
+.dc-state.hull  {color:var(--red);  border-color:rgba(180,50,55,.4);   background:rgba(180,50,55,.08);}
+[data-theme="light"] .dc-state.final {background:rgba(47,143,107,.18); border-color:rgba(47,143,107,.46); color:var(--green);}
+[data-theme="light"] .dc-state.armor {background:rgba(183,121,31,.18); border-color:rgba(183,121,31,.46); color:var(--amber);}
+[data-theme="light"] .dc-state.anchor{background:rgba(140,109,31,.18); border-color:rgba(140,109,31,.46); color:var(--yellow);}
+[data-theme="light"] .dc-state.hull  {background:rgba(212,74,58,.18); border-color:rgba(212,74,58,.46); color:var(--red);}
+
+.dc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dc-dot.ours  {background:var(--green);}
+.dc-dot.theirs{background:var(--red);}
+
+.dc-cd{
+  font-family:var(--font-mono);font-size:9px;color:var(--text-3);
+  white-space:nowrap;flex-shrink:0;text-align:right;min-width:36px;
+}
+.dc-cd.soon  {color:var(--amber);}
+.dc-cd.urgent{color:var(--red);font-weight:600;}
+
+/* ══════════════════════════════════════
+   TIMELINE / GANTT VIEW
+══════════════════════════════════════ */
+.view-gantt{display:none;}
+.view-gantt.active-view{display:block;}
+
+.tl-section{margin-bottom:20px;}
+.tl-section-header{
+  font-size:10px;font-weight:600;color:var(--text-2);text-transform:uppercase;
+  letter-spacing:.03em;padding:3px 0 5px;margin-bottom:0;
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;
+}
+.tl-section-header.today{color:var(--amber);}
+
+/* outer scroll container */
+.tl-scroll{overflow-x:auto;background:var(--bg-surface);border:1px solid var(--border);border-radius:3px;border-top:none;border-top-left-radius:0;border-top-right-radius:0;}
+.tl-scroll{
+  scrollbar-color:var(--border-mid) var(--bg-header);
+  scrollbar-width:thin;
+}
+.tl-scroll::-webkit-scrollbar{height:10px;}
+.tl-scroll::-webkit-scrollbar-track{
+  background:var(--bg-header);
+  border-top:1px solid var(--border);
+}
+.tl-scroll::-webkit-scrollbar-thumb{
+  background:var(--border-mid);
+  border:2px solid var(--bg-header);
+  border-radius:8px;
+}
+.tl-scroll::-webkit-scrollbar-thumb:hover{background:var(--blue);}
+
+/* inner canvas width = 24 hours * 60px/hr  = 1440px minimum  */
+.tl-inner{position:relative;min-width:1440px;}
+
+/* ── Hour axis ── */
+.tl-axis{
+  position:sticky;top:0;z-index:20;
+  height:22px;background:var(--bg-header);
+  border-bottom:2px solid var(--border-mid);
+  display:flex;pointer-events:none;
+}
+[data-theme="light"] .tl-axis{background:var(--bg-header);}
+.tl-axis-hour{
+  flex:1;display:flex;align-items:center;justify-content:flex-start;
+  padding-left:3px;
+  font-family:var(--font-mono);font-size:9px;color:var(--text-3);
+  border-right:1px solid var(--border);
+  white-space:nowrap;
+}
+.tl-axis-hour:last-child{border-right:none;}
+
+/* ── Elapsed overlay ── */
+.tl-elapsed-overlay{
+  position:absolute;top:22px;bottom:0;left:0;
+  background:rgba(0,0,0,.06);
+  pointer-events:none;z-index:1;
+  border-right:none;
+}
+[data-theme="light"] .tl-elapsed-overlay{background:rgba(0,0,0,.04);}
+
+/* ── Now line ── */
+.tl-now-line{
+  position:absolute;top:0;bottom:0;width:2px;
+  background:var(--blue);opacity:.8;z-index:15;pointer-events:none;
+}
+.tl-now-line::before{
+  content:'';position:absolute;top:22px;left:-4px;
+  border:5px solid transparent;border-top:7px solid var(--blue);
+}
+.tl-now-time{
+  position:absolute;top:0;
+  font-family:var(--font-mono);font-size:9px;font-weight:600;
+  color:var(--blue);transform:translateX(-50%);
+  background:var(--bg-header);padding:1px 3px;
+  white-space:nowrap;line-height:22px;
+  pointer-events:none;z-index:16;
+}
+[data-theme="light"] .tl-now-time{background:var(--bg-header);}
+
+/* ── Row bands ── */
+.tl-rows{position:relative;}
+.tl-row{
+  position:relative;height:24px;
+  border-bottom:1px solid var(--border);
+  transition:background .08s;
+}
+.tl-row:hover{background:var(--bg-hover);}
+.tl-row.elapsed{opacity:.38;}
+.tl-row.hostile{background:rgba(150,45,50,.05);}
+[data-theme="light"] .tl-row.hostile{background:rgba(212,74,58,.11);}
+/* alternating subtle stripe */
+.tl-row:nth-child(odd){background:rgba(255,255,255,.015);}
+[data-theme="light"] .tl-row:nth-child(odd){background:rgba(0,0,0,.015);}
+.tl-row:hover{background:var(--bg-hover)!important;}
+
+/* ── Hour gridlines inside rows ── */
+.tl-gridline{position:absolute;top:0;bottom:0;width:1px;background:var(--border);pointer-events:none;z-index:0;}
+.tl-gridline.major-hour{background:var(--border-mid);}
+
+/* ── Timer pill on the timeline ── */
+.tl-pill{
+  position:absolute;top:50%;transform:translateY(-50%);
+  height:16px;
+  border-radius:3px;
+  border:1px solid;
+  display:flex;align-items:center;
+  padding:0 5px;
+  white-space:nowrap;overflow:hidden;
+  cursor:default;z-index:5;
+  transition:filter .1s;
+  min-width:6px;
+  font-size:9px;font-family:var(--font-sans);font-weight:500;
+}
+.tl-pill:hover{filter:brightness(1.15);z-index:10;}
+
+/* Ours */
+.tl-pill.ours{
+  background:rgba(61,158,106,.18);
+  border-color:rgba(61,158,106,.5);
+  color:var(--green);
+}
+[data-theme="light"] .tl-pill.ours{
+  background:rgba(47,143,107,.18);
+  border-color:rgba(47,143,107,.46);
+  color:var(--green);
+}
+/* Theirs */
+.tl-pill.theirs{
+  background:rgba(192,64,74,.18);
+  border-color:rgba(192,64,74,.5);
+  color:var(--red);
+}
+[data-theme="light"] .tl-pill.theirs{
+  background:rgba(212,74,58,.18);
+  border-color:rgba(212,74,58,.46);
+  color:var(--red);
+}
+/* Major — gold pill */
+.tl-pill.major{
+  background:rgba(255,209,102,.24);
+  border-color:rgba(255,209,102,.78);
+  color:#ffd166;
+  font-weight:800;
+  height:18px;
+  box-shadow:0 0 0 1px rgba(255,209,102,.16);
+}
+[data-theme="light"] .tl-pill.major{
+  background:rgba(183,121,31,.20);
+  border-color:rgba(183,121,31,.52);
+  color:var(--amber);
+}
+.tl-pill.elapsed{opacity:.38;}
+.tl-pill-star{margin-right:3px;font-size:10px;text-shadow:0 0 8px rgba(255,209,102,.45);}
+.tl-pill-text{overflow:hidden;text-overflow:ellipsis;}
+
+/* ── Legend ── */
+.tl-legend{
+  display:flex;align-items:center;gap:12px;
+  font-size:10px;color:var(--text-3);
+  padding:5px 0 2px;flex-wrap:wrap;
+}
+.tl-legend-item{display:flex;align-items:center;gap:4px;}
+.tl-legend-swatch{width:20px;height:10px;border-radius:2px;border:1px solid;}
+
+/* ── MISC ── */
+@media(max-width:700px){.col-name,.col-tod{display:none;}.grid-columns{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}.gantt-label{width:140px;}}
+
+/* ══════════════════════════════════════
+   COMPACT VIEW  —  max timers on screen
+══════════════════════════════════════ */
+.view-compact{display:none;}
+.view-compact.active-view{display:block;}
+
+.compact-cols{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:0 8px;
+  align-items:start;
+}
+@media(max-width:900px){.compact-cols{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:550px){.compact-cols{grid-template-columns:1fr;}}
+
+.compact-col{
+  background:var(--bg-surface);
+  border:1px solid var(--border);
+  border-radius:3px;
+  overflow:hidden;
+}
+
+/* sticky mini-header per column showing the range */
+.compact-col-hdr{
+  position:sticky;top:0;z-index:4;
+  background:var(--bg-header);
+  border-bottom:1px solid var(--border-mid);
+  padding:3px 8px;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--font-mono);
+  font-size:9px;font-weight:600;
+  color:var(--text-3);text-transform:uppercase;letter-spacing:.03em;
+}
+[data-theme="light"] .compact-col-hdr{background:var(--bg-header);color:var(--text-3);border-bottom-color:var(--border-mid);}
+.compact-col-hdr-count{font-size:9px;color:var(--text-3);font-weight:400;}
+
+/* date separator inside a column */
+.compact-date-sep{
+  padding:2px 8px;
+  font-size:8px;font-weight:700;
+  color:var(--text-3);
+  text-transform:uppercase;letter-spacing:.04em;
+  background:var(--bg-header);
+  border-top:1px solid var(--border-mid);
+  border-bottom:1px solid var(--border);
+}
+.compact-date-sep.today{color:var(--amber);}
+[data-theme="light"] .compact-date-sep{background:var(--bg-header);color:var(--text-3);}
+[data-theme="light"] .compact-date-sep.today{color:var(--amber);}
+
+/* individual timer row */
+.compact-row{
+  display:flex;
+  align-items:center;
+  gap:0;
+  border-bottom:1px solid var(--border);
+  padding:1px 0;
+  line-height:1;
+  cursor:default;
+  transition:background .08s;
+  position:relative;
+  min-height:20px;
+}
+.compact-row:last-child{border-bottom:none;}
+.compact-row:hover{background:var(--bg-hover)!important;}
+
+/* major accent bar */
+.compact-row.major{border-left:5px solid #ffd166;box-shadow:inset 0 0 0 1px rgba(255,209,102,.10);}
+[data-theme="light"] .compact-row.major{border-left-color:var(--amber);}
+.compact-row.major .compact-time{font-family:var(--font-sans);font-size:14px;color:#ffd166;font-weight:900;}
+[data-theme="light"] .compact-row.major .compact-time{color:var(--amber);}
+.compact-star{width:14px;text-align:center;color:#ffd166;font-size:12px;text-shadow:0 0 8px rgba(255,209,102,.45);flex-shrink:0;}
+[data-theme="light"] .compact-star{color:var(--amber);text-shadow:none;}
+
+/* time-of-day tint */
+.compact-row.morning  {background:var(--morning);}
+.compact-row.afternoon{background:var(--afternoon);}
+.compact-row.evening  {background:var(--evening);}
+[data-theme="light"] .compact-row.morning  {background:rgba(37,99,235,.10);}
+[data-theme="light"] .compact-row.afternoon{background:rgba(183,121,31,.12);}
+[data-theme="light"] .compact-row.evening  {background:rgba(124,58,237,.10);}
+
+/* hostile tint overrides tod */
+.compact-row.hostile  {background:rgba(150,45,50,.10)!important;}
+[data-theme="light"] .compact-row.hostile{background:rgba(212,74,58,.13)!important;}
+
+/* elapsed */
+.compact-row.elapsed{opacity:.32;}
+.compact-row.elapsed .compact-time{text-decoration:line-through;text-decoration-color:var(--text-3);}
+
+/* cells */
+.compact-time{
+  font-family:var(--font-mono);
+  font-size:11px;font-weight:600;
+  color:var(--text-1);
+  white-space:nowrap;
+  flex-shrink:0;
+  width:40px;
+  padding:2px 5px 2px 8px;
+}
+[data-theme="light"] .compact-time{font-weight:700;}
+
+.compact-system{
+  font-family:var(--font-sans);
+  font-size:13.5px;color:var(--text-1);
+  font-weight:800;
+  white-space:nowrap;flex-shrink:0;
+  width:84px;
+  overflow:hidden;text-overflow:ellipsis;
+  padding-right:4px;
+}
+[data-theme="light"] .compact-system{color:var(--blue);}
+
+.compact-struct{
+  font-size:11.5px;color:var(--text-2);
+  font-weight:650;
+  flex-shrink:0;
+  width:72px;
+  overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;
+  padding-right:4px;
+}
+/* make major structures slightly more visible */
+.compact-row.major .compact-system{font-weight:900;}
+.compact-row.major .compact-struct{color:#ffd166;font-weight:800;}
+
+.compact-state{
+  font-size:11.5px;
+  font-weight:700;
+  flex-shrink:0;
+  width:54px;
+  overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;
+  padding-right:2px;
+}
+.compact-state.final {color:var(--green);}
+.compact-state.armor {color:var(--amber);}
+.compact-state.anchor{color:var(--yellow);}
+
+.compact-owner{
+  flex-shrink:0;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  margin:0 6px 0 2px;
+}
+.compact-owner.ours  {background:var(--green);}
+.compact-owner.theirs{background:var(--red);}
+
+/* countdown on hover via title attr — no space needed */
+
+
+/* ── Compact view (v16): day grid, left→right, no overlap ── */
+.compact-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+  gap:8px;
+  padding:10px 8px 14px 8px;
+}
+.compact-row{
+  display:grid;
+  grid-template-columns: 18px 52px 78px minmax(0,1fr) 74px 14px 70px;
+  gap:8px;
+  align-items:center;
+  min-width:0;
+}
+
+/* Ensure Compact stays readable: keep key fields visible and prevent truncation collisions */
+.compact-row > *{min-width:0;}
+
+/* Time must always show fully (HH:MM) */
+.compact-time{
+  width:auto !important;
+  padding:2px 6px 2px 8px;
+  overflow:visible;
+  text-overflow:clip;
+}
+
+/* System should be easy to scan (no ellipsis for typical 5–7 char systems) */
+.compact-system{
+  width:auto !important;
+  font-size:11px;
+  font-weight:700;
+  color:var(--blue);
+  overflow:visible;
+  text-overflow:clip;
+}
+
+/* Keep structure/state compact but readable */
+.compact-struct{display:block;width:100% !important;min-width:0;}
+.compact-state{width:100% !important;text-align:center;}
+
+/* single-line truncate for compact scanning (but keep time/system fully visible) */
+.compact-struct,.compact-state,.compact-cd{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* keep time + system fully visible */
+.compact-time,.compact-system{white-space:nowrap;}
+.compact-struct{justify-self:stretch;}
+.compact-state{justify-self:stretch;}
+.compact-cd{
+  font-family:var(--font-mono);
+  font-size:9px;
+  color:var(--text-3);
+  justify-self:end;
+}
+
+/* collapsible day sections */
+.compact-section-header{cursor:pointer; user-select:none;}
+.compact-day.collapsed .compact-grid{display:none;}
+.compact-day.collapsed .dsh-caret{transform:rotate(0deg);}
+.dsh-caret{display:inline-block; transform:rotate(90deg); transition:transform .12s ease;}
+.compact-day.collapsed .dsh-caret{transform:rotate(0deg);}
+
+/* responsive: keep single-line but adjust grid columns */
+@media(max-width:1100px){
+  .compact-grid{grid-template-columns:repeat(auto-fill,minmax(320px,1fr));}
+  .compact-row{grid-template-columns: 18px 50px 74px minmax(0,1fr) 70px 14px 66px;}
+}
+@media(max-width:820px){
+  .compact-grid{grid-template-columns:1fr;}
+  .compact-row{grid-template-columns: 18px 54px 86px minmax(0,1fr) 74px 14px 74px;}
+}
+
+
+/* ══════════════════════════════════════
+   MAP VIEW
+══════════════════════════════════════ */
+/* Summary view */
+.view-summary{display:none;}
+.view-summary.active-view{display:block;}
+.summary-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.summary-title{font-size:14px;font-weight:700;color:var(--text-1);}
+.summary-subtitle{font-size:11px;color:var(--text-3);margin-top:3px;line-height:1.35;}
+.summary-meta{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.summary-chip{background:var(--bg-surface);border:1px solid var(--border);border-radius:3px;padding:5px 8px;font-family:var(--font-mono);font-size:10px;color:var(--text-2);white-space:nowrap;}
+.summary-empty{padding:36px 12px;text-align:center;color:var(--text-3);font-size:12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:3px;}
+.summary-day{margin-bottom:18px;}
+.summary-day-head{display:flex;align-items:center;gap:8px;margin:0 0 7px;color:var(--text-2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+.summary-day-head.today{color:var(--amber);}
+.summary-day-line{height:1px;background:var(--border);flex:1;}
+.summary-block{position:relative;background:var(--bg-surface);border:1px solid var(--border);border-left:6px solid var(--border-mid);border-radius:6px;margin-bottom:9px;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.10);}
+.summary-block.hostile{border-left-color:var(--red);background:rgba(192,64,74,.10);}
+.summary-block.mixed{border-left-color:var(--amber);background:linear-gradient(90deg,rgba(192,64,74,.12),rgba(61,158,106,.06));}
+.summary-block.friendly{border-left-color:var(--green);background:rgba(61,158,106,.07);}
+.summary-block.major{box-shadow:inset 0 0 0 1px rgba(255,209,102,.16),0 8px 22px rgba(0,0,0,.12);}
+.summary-block.urgent{border-color:rgba(192,64,74,.75);}
+.summary-block-head{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;background:rgba(0,0,0,.10);border-bottom:1px solid var(--border);}
+.summary-window-wrap{display:grid;gap:2px;}
+.summary-window{font-family:var(--font-mono);font-size:14px;font-weight:800;color:var(--text-1);white-space:nowrap;}
+.summary-kicker{font-family:var(--font-mono);font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:.03em;}
+.summary-region{font-size:15px;font-weight:800;color:var(--blue);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.summary-region-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px;}
+.summary-priority{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text-1);border-radius:3px;padding:1px 5px;background:var(--bg);border:1px solid var(--border);}
+.summary-priority.hostile{color:var(--red);border-color:rgba(192,64,74,.55);background:rgba(192,64,74,.10);}
+.summary-priority.mixed{color:var(--amber);border-color:rgba(176,122,32,.55);background:rgba(176,122,32,.10);}
+.summary-priority.friendly{color:var(--green);border-color:rgba(61,158,106,.55);background:rgba(61,158,106,.10);}
+.summary-priority.major{color:#ffd166;border-color:rgba(255,209,102,.55);background:rgba(255,209,102,.12);}
+.summary-priority.urgent{color:var(--red);border-color:rgba(192,64,74,.75);background:rgba(192,64,74,.16);}
+.summary-counts{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;}
+.summary-count{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text-2);border:1px solid var(--border);border-radius:3px;padding:3px 6px;background:var(--bg);}
+.summary-count.hostile{color:var(--red);}
+.summary-count.friendly{color:var(--green);}
+.summary-body{padding:10px 12px;}
+.summary-lead{font-size:12px;color:var(--text-1);line-height:1.35;margin-bottom:8px;font-weight:700;}
+.summary-structure-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.summary-struct-chip{font-size:11px;font-weight:700;color:var(--text-2);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:3px 7px;}
+.summary-struct-chip.major{color:#ffd166;border-color:rgba(255,209,102,.55);background:rgba(255,209,102,.12);}
+.summary-detail{display:flex;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--text-3);line-height:1.35;}
+.summary-detail span{display:inline-flex;align-items:center;gap:4px;}
+.summary-systems{font-family:var(--font-mono);color:var(--text-2);}
+.summary-eta{font-family:var(--font-mono);color:var(--amber);}
+@media(max-width:760px){
+  .summary-block-head{grid-template-columns:1fr;gap:5px;}
+  .summary-counts{justify-content:flex-start;}
+}
+
+.view-map{display:none;}
+.view-map.active-view{display:block;}
+.map-wrap{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;}
+.map-svg-wrap{flex:1;min-width:300px;background:var(--bg-surface);border:1px solid var(--border);border-radius:4px;padding:8px;overflow:hidden;}
+.map-svg-wrap svg{width:100%;height:auto;display:block;}
+.map-sidebar{width:240px;flex-shrink:0;}
+.map-region-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:3px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:border-color .1s;}
+.map-region-card:hover{border-color:var(--border-mid);}
+.map-region-card.active{border-color:var(--blue);}
+.map-rc-name{font-size:11px;font-weight:600;color:var(--text-1);margin-bottom:4px;}
+.map-rc-bars{display:flex;gap:4px;align-items:center;}
+.map-rc-bar{height:6px;border-radius:2px;min-width:4px;}
+.map-rc-bar.hostile{background:var(--red);}
+.map-rc-bar.friendly{background:var(--green);}
+.map-rc-nums{font-family:var(--font-mono);font-size:10px;color:var(--text-3);margin-left:4px;}
+.map-detail{background:var(--bg-surface);border:1px solid var(--border);border-radius:3px;padding:10px 12px;margin-top:8px;}
+.map-detail-title{font-size:12px;font-weight:600;color:var(--text-1);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.map-detail-row{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.map-detail-row:last-child{border-bottom:none;}
+.map-detail-time{font-family:var(--font-mono);color:var(--text-2);white-space:nowrap;min-width:40px;}
+.map-detail-sys{color:var(--blue);font-family:var(--font-mono);font-size:10px;white-space:nowrap;}
+.map-detail-struct{color:var(--text-3);font-size:10px;}
+.map-detail-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.map-detail-dot.hostile{background:var(--red);}
+.map-detail-dot.friendly{background:var(--green);}
+.map-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--text-3);margin-bottom:8px;align-items:center;}
+.map-legend-item{display:flex;align-items:center;gap:4px;}
+.map-legend-dot{width:8px;height:8px;border-radius:50%;}
+.map-triage-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.map-triage-label{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.03em;}
+.map-triage-select{background:var(--bg-surface);border:1px solid var(--border);color:var(--text-1);border-radius:3px;padding:4px 8px;font-family:var(--font-sans);font-size:11px;}
+.map-triage-select:focus{outline:2px solid var(--blue);outline-offset:1px;}
+.map-wave-dot{width:9px;height:9px;border-radius:50%;border:1px solid rgba(255,255,255,.22);}
+.map-wave-dot.wave-now{background:#ff4d5d;}
+.map-wave-dot.wave-soon{background:#ffb22e;}
+.map-wave-dot.wave-later{background:#35b8ff;}
+.map-wave-dot.wave-future{background:#a8b3c2;}
+.map-actions{background:var(--bg-surface);border:1px solid var(--border);border-radius:3px;padding:10px 12px;margin-top:8px;}
+.map-actions-title{font-size:12px;font-weight:700;color:var(--text-1);margin-bottom:8px;}
+.map-actions-empty{font-size:11px;color:var(--text-3);line-height:1.35;}
+.map-wave-group{margin-top:10px;}
+.map-wave-group:first-of-type{margin-top:0;}
+.map-wave-head{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px;}
+.map-action-row{display:grid;grid-template-columns:1fr auto;gap:4px 8px;padding:6px 0;border-top:1px solid var(--border);font-size:11px;}
+.map-action-row:first-of-type{border-top:none;}
+.map-action-main{min-width:0;}
+.map-action-sys{font-family:var(--font-mono);font-weight:700;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.map-action-meta{color:var(--text-3);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.map-action-time{font-family:var(--font-mono);color:var(--text-1);white-space:nowrap;text-align:right;}
+.map-action-count{font-family:var(--font-mono);color:var(--text-3);font-size:10px;text-align:right;white-space:nowrap;}
+
+/* ── Region drilldown breadcrumb ── */
+.map-breadcrumb{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--text-3);}
+.map-breadcrumb .map-bc-link{color:var(--blue);cursor:pointer;text-decoration:underline;}
+.map-breadcrumb .map-bc-link:hover{color:var(--text-1);}
+.map-breadcrumb .map-bc-sep{color:var(--border-mid);}
+.map-breadcrumb .map-bc-cur{color:var(--text-1);font-weight:600;}
+
+/* ── System node tooltip ── */
+.map-sys-tooltip{
+  position:fixed;z-index:200;pointer-events:none;
+  background:var(--bg-surface);border:1px solid var(--border-mid);
+  border-radius:4px;padding:8px 10px;min-width:160px;max-width:360px;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);
+  font-size:11px;color:var(--text-1);
+  display:none;
+}
+.map-sys-tooltip .mst-sys{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--blue);margin-bottom:5px;}
+.map-sys-tooltip .mst-row{display:flex;align-items:center;gap:6px;padding:2px 0;border-bottom:1px solid var(--border);}
+.map-sys-tooltip .mst-row:last-child{border-bottom:none;}
+.map-sys-tooltip .mst-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.map-sys-tooltip .mst-dot.hostile{background:var(--red);}
+.map-sys-tooltip .mst-dot.friendly{background:var(--green);}
+.map-sys-tooltip .mst-cd{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--text-3);}
+.map-sys-tooltip .mst-cd.urgent{color:var(--red);}
+.map-sys-tooltip .mst-cd.soon{color:var(--amber);}
+
+
+.modal-backdrop{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.62);}
+.modal-backdrop[style*="display: none"],.modal-backdrop[style*="display:none"]{display:none!important;}
+body.modal-open{overflow:hidden;}
+.modal{width:min(820px, 100%);max-height:calc(100vh - 36px);background:var(--bg-surface);border:1px solid var(--border-mid);border-radius:8px;box-shadow:0 18px 60px rgba(0,0,0,.45);overflow:auto;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);}
+.modal-title{font-size:13px;font-weight:700;color:var(--text-1);}
+.modal-body{padding:12px 14px;}
+.modal-help{font-size:12px;color:var(--text-2);margin-bottom:10px;line-height:1.35;}
+.modal-help .mono{font-family:var(--font-mono);font-size:11px;color:var(--text-1);}
+#importText{width:100%;height:240px;resize:vertical;border-radius:8px;border:1px solid var(--border-mid);background:var(--bg);color:var(--text-1);padding:10px;font-family:var(--font-mono);font-size:12px;line-height:1.45;outline:none;}
+#importText:focus{border-color:rgba(0,255,255,.45);box-shadow:0 0 0 3px rgba(0,255,255,.08);}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.modal-foot{margin-top:10px;font-size:12px;color:var(--text-2);}
+.tutorial-steps{display:grid;gap:10px;margin-top:10px;}
+.tutorial-step{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);}
+.tutorial-step-num{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg-hover);color:var(--text-1);font-family:var(--font-mono);font-size:12px;font-weight:700;border:1px solid var(--border-mid);}
+.tutorial-step-title{font-size:12px;font-weight:700;color:var(--text-1);margin-bottom:2px;}
+.tutorial-step-copy{font-size:12px;color:var(--text-2);line-height:1.35;}
+.kbd{display:inline-block;font-family:var(--font-mono);font-size:11px;color:var(--text-1);background:var(--bg-hover);border:1px solid var(--border-mid);border-radius:4px;padding:1px 5px;white-space:nowrap;}
+body.tutorial-pointer-active #importBtn{position:relative;z-index:650;border-color:var(--amber);color:var(--text-1);background:var(--bg-hover);box-shadow:0 0 0 3px rgba(176,122,32,.30),0 0 22px rgba(176,122,32,.35);}
+.tutorial-pointer{position:fixed;z-index:640;display:none;align-items:center;gap:8px;pointer-events:none;color:var(--text-1);font-size:12px;font-weight:700;background:var(--bg-surface);border:1px solid var(--amber);border-radius:8px;padding:8px 10px;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+.tutorial-pointer::before{content:'Paste timers';}
+.tutorial-pointer::after{content:'';position:absolute;right:100%;top:50%;transform:translateY(-50%);border-width:7px;border-style:solid;border-color:transparent var(--amber) transparent transparent;}
+.app-footer{margin-top:24px;padding-top:12px;border-top:1px solid var(--border);color:var(--text-3);font-size:11px;text-align:center;}
+
+</style>
+</head>
+<body>
+<div class="app-wrap">
+
+<div class="header">
+  <div class="header-left">
+    <button class="brand-btn" id="brandHome" data-action="home" title="Back to table view">
+      <svg class="brand-logo" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <rect width="64" height="64" rx="12" fill="#111418"></rect>
+        <path d="M12 16h18c13 0 22 7 22 16s-9 16-22 16H12V16zm10 9v14h8c7 0 11-3 11-7s-4-7-11-7h-8z" fill="#3d9e6a"></path>
+        <path d="M38 16h16v9h-7v23h-9V25h-7v-9h7z" fill="#d4dce8"></path>
+      </svg>
+      <span class="brand-copy">
+        <span class="title">WinterCo. Timerboard</span>
+        <span class="subtitle">EVE Online - All times UTC</span>
+      </span>
+      <span class="home-hint">Back to table</span>
+    </button>
+    <div class="clock-box">
+      <div class="live-clock" id="liveClock">00:00:00</div>
+      <div class="clock-label">EVE Time</div>
+    </div>
+  </div>
+  <nav class="header-nav" aria-label="Timerboard views">
+    <button class="tool-btn view-btn"        id="vbSummary" data-view="summary" title="Command summary">Summary</button>
+    <button class="tool-btn view-btn active" id="vbTable"  data-view="table"  title="Table view" aria-current="page">Table</button>
+    <button class="tool-btn view-btn"        id="vbGrid"   data-view="compact"   title="Compact cards - max timers on screen">Compact</button>
+    <button class="tool-btn view-btn"        id="vbGantt"  data-view="gantt"  title="Timeline - timers on a 24h axis">Timeline</button>
+    <button class="tool-btn view-btn"        id="vbMap"    data-view="map"    title="Region map - timers by EVE geography">Map</button>
+  </nav>
+  <div class="header-actions">
+    <button class="tool-btn" id="importBtn" data-action="open-import" title="Paste timers from Discord and parse automatically">Paste timers</button>
+    <button class="tool-btn" id="tutorialBtn" data-action="open-tutorial" title="Show the quick-start guide">? Help</button>
+    <button class="tool-btn" id="themeToggle" data-action="theme"><span id="themeIcon"></span><span id="themeLabel">Light</span></button>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="timeline-wrap">
+  <div class="timeline-bar" id="timelineBar"></div>
+  <div class="timeline-meta">
+    <span>00:00</span>
+    <span id="timelineElapsedCount"></span>
+    <span>23:59</span>
+  </div>
+</div>
+
+<div class="controls" id="filterBar">
+  <span class="filter-label">Filter:</span>
+  <button class="tool-btn filter-reset active" data-role="reset" data-action="reset-filters">All</button>
+  <button class="tool-btn filter-reset" data-group="major" data-value="Major">Major</button>
+  <details class="filter-group" open>
+    <summary>Side</summary>
+    <span class="filter-group-label">Side</span>
+    <div class="filter-group-body">
+      <button class="tool-btn" data-group="side" data-value="Friendly">Friendly</button>
+      <button class="tool-btn" data-group="side" data-value="Hostile">Hostile</button>
+    </div>
+  </details>
+  <details class="filter-group" open>
+    <summary>State</summary>
+    <span class="filter-group-label">State</span>
+    <div class="filter-group-body">
+      <button class="tool-btn" data-group="state" data-value="Final">Final</button>
+      <button class="tool-btn" data-group="state" data-value="Armor">Armor</button>
+      <button class="tool-btn" data-group="state" data-value="Hull">Hull</button>
+      <button class="tool-btn" data-group="state" data-value="Anchoring">Anchoring</button>
+    </div>
+  </details>
+  <details class="filter-group" open>
+    <summary>Where</summary>
+    <span class="filter-group-label">Where</span>
+    <div class="filter-group-body">
+      <details class="struct-dd" id="regionDD">
+        <summary class="tool-btn" id="regionSummary">Region v</summary>
+        <div class="struct-menu" id="regionMenu">
+          <div class="struct-menu-head">
+            <div class="struct-menu-title">Region</div>
+            <button class="tool-btn" data-action="clear-region-filter">Clear</button>
+          </div>
+          <div class="struct-options" id="regionOptions"></div>
+        </div>
+      </details>
+    </div>
+  </details>
+  <details class="filter-group" open>
+    <summary>Type</summary>
+    <span class="filter-group-label">Type</span>
+    <div class="filter-group-body">
+      <details class="struct-dd" id="structDD">
+        <summary class="tool-btn" id="structSummary">Structure v</summary>
+        <div class="struct-menu" id="structMenu">
+          <div class="struct-menu-head">
+            <div class="struct-menu-title">Structure type</div>
+            <button class="tool-btn" data-action="clear-structure-filter">Show all</button>
+          </div>
+          <div class="struct-options" id="structOptions"></div>
+        </div>
+      </details>
+    </div>
+  </details>
+</div>
+
+<div class="active-filters" id="activeFilters" aria-live="polite"></div>
+
+<div id="dayNav" class="day-nav"></div>
+<div id="timerboard"></div>
+<div class="map-sys-tooltip" id="mapSysTooltip"></div>
+<footer class="app-footer">&copy; 2026. Ingame: DTee. All rights reserved.</footer>
+<div class="tutorial-pointer" id="tutorialPointer" aria-hidden="true"></div>
+
+</div><!-- app-wrap -->
+
+<!-- Import / Paste Timers Modal -->
+<div class="modal-backdrop" id="importBackdrop" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Paste timers</div>
+      <button class="tool-btn" data-action="close-import" title="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-help">
+        Paste Discord timer lines (one per line). Region prefixes are parsed directly when present, e.g. <span class="mono">2026-04-09 16:29 [Geminate] D-I9HJ - Goonswarm Federation ihub [🛖IHUB][CONDI][Final] (1:42) [#Sov]</span>. Non-region lines also work, e.g. <span class="mono">2026-02-16 13:00 KMC-WI - Drill P5M2 [Athanor][Friendly][Final] (70:59) [#Auth]</span>
+      </div>
+      <textarea id="importText" spellcheck="false" placeholder="Paste timers here..."></textarea>
+      <div class="modal-actions">
+        <button class="tool-btn" data-action="load-test-fixture">Insert sample timers</button>
+        <button class="tool-btn" data-import-mode="replace">Import &amp; Replace</button>
+        <button class="tool-btn" data-import-mode="append">Import &amp; Append</button>
+        <button class="tool-btn" data-action="clear-timers">Clear</button>
+      </div>
+      <div class="modal-foot" id="importStatus"></div>
+    </div>
+  </div>
+</div>
+
+<!-- First-time Tutorial Modal -->
+<div class="modal-backdrop" id="tutorialBackdrop" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Timerboard quick start</div>
+      <button class="tool-btn" data-action="close-tutorial" title="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-help">
+        Bring timers in from Discord, then use the table, compact, timeline, and map views to read them.
+      </div>
+      <div class="tutorial-steps">
+        <div class="tutorial-step">
+          <div class="tutorial-step-num">1</div>
+          <div>
+            <div class="tutorial-step-title">Copy from Discord</div>
+            <div class="tutorial-step-copy">In Discord, go to <span class="mono">#timerboard</span> and copy the latest timer lines from the channel.</div>
+          </div>
+        </div>
+        <div class="tutorial-step">
+          <div class="tutorial-step-num">2</div>
+          <div>
+            <div class="tutorial-step-title">Select the timer block</div>
+            <div class="tutorial-step-copy">Highlight the timer text you need, then use <span class="kbd">Ctrl+C</span> to copy it.</div>
+          </div>
+        </div>
+        <div class="tutorial-step">
+          <div class="tutorial-step-num">3</div>
+          <div>
+            <div class="tutorial-step-title">Paste it here</div>
+            <div class="tutorial-step-copy">Click <strong>Paste timers</strong>, click inside the box, use <span class="kbd">Ctrl+V</span>, then choose <strong>Import &amp; Replace</strong> for a fresh board or <strong>Import &amp; Append</strong> to add to what is already here.</div>
+          </div>
+        </div>
+        <div class="tutorial-step">
+          <div class="tutorial-step-num">4</div>
+          <div>
+            <div class="tutorial-step-title">Read the pressure</div>
+            <div class="tutorial-step-copy">Use filters for side, state, region, and structure type. The map view lets you click a region, then filtering will stay inside that region.</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="tool-btn" data-action="tutorial-open-import">Paste timers now</button>
+        <button class="tool-btn" data-action="close-tutorial">Got it</button>
+      </div>
+      <div class="modal-foot">You can reopen this from the Help button.</div>
+    </div>
+  </div>
+</div>
+
+
+<script nonce="timerboard-app">
+/* ════════════════════════════════
+   DATA
+════════════════════════════════ */
+const RAW_TIMERS = [
+  {date:"2026-04-10",time:"13:33",system:"Atioth",name:"Insidious. ihub",structure:"IHub",state:"Final",status:"Hostile",region:"Geminate"},
+  {date:"2026-04-11",time:"10:03",system:"6RQ9-A",name:"TEST Forward IHub",structure:"IHub",state:"Final",status:"Friendly",region:"Geminate"},
+  {date:"2026-04-11",time:"10:06",system:"TDE4-H",name:"TEST Border IHub",structure:"IHub",state:"Final",status:"Friendly",region:"Geminate"},
+  {date:"2026-04-11",time:"10:24",system:"D-I9HJ",name:"Geminate Infrastructure Hub",structure:"IHub",state:"Armor",status:"Friendly",region:"Geminate"},
+  {date:"2026-04-11",time:"11:12",system:"P-FSQE",name:"Venal TCU",structure:"TCU",state:"Final",status:"Friendly",region:"Venal"},
+  {date:"2026-04-11",time:"11:47",system:"RQH-MY",name:"Pure Blind Infrastructure Hub",structure:"IHub",state:"Final",status:"Friendly",region:"Pure Blind"},
+  {date:"2026-04-11",time:"12:18",system:"RD-G2R",name:"Pure Blind Frontline IHub",structure:"IHub",state:"Armor",status:"Friendly",region:"Pure Blind"},
+  {date:"2026-04-11",time:"12:42",system:"00TY-J",name:"Western TCU",structure:"TCU",state:"Final",status:"Friendly",region:"Pure Blind"},
+  {date:"2026-04-11",time:"18:15",system:"VSJ-PP",name:"Hostile Beachhead IHub",structure:"IHub",state:"Armor",status:"Hostile",region:"Geminate"},
+  {date:"2026-04-11",time:"19:40",system:"XI-VUF",name:"Border TCU",structure:"TCU",state:"Final",status:"Friendly",region:"Pure Blind"},
+  {date:"2026-04-12",time:"09:15",system:"6RQ9-A",name:"TEST Capital IHub",structure:"IHub",state:"Final",status:"Friendly",region:"Geminate"},
+  {date:"2026-04-12",time:"09:48",system:"TDE4-H",name:"Geminate South IHub",structure:"IHub",state:"Final",status:"Friendly",region:"Geminate"},
+  {date:"2026-04-12",time:"10:22",system:"Atioth",name:"Counterattack IHub",structure:"IHub",state:"Armor",status:"Hostile",region:"Geminate"},
+  {date:"2026-04-12",time:"11:03",system:"RQH-MY",name:"Pure Blind Main IHub",structure:"IHub",state:"Final",status:"Friendly",region:"Pure Blind"},
+  {date:"2026-04-12",time:"11:26",system:"RD-G2R",name:"Northern IHub",structure:"IHub",state:"Final",status:"Friendly",region:"Pure Blind"},
+  {date:"2026-04-12",time:"12:05",system:"Q-7SUI",name:"Pure Blind TCU",structure:"TCU",state:"Final",status:"Friendly",region:"Pure Blind"},
+  {date:"2026-04-12",time:"12:34",system:"7-K5EL",name:"Vale Test IHub",structure:"IHub",state:"Final",status:"Friendly",region:"Vale of the Silent"},
+  {date:"2026-04-12",time:"13:02",system:"H-5GUI",name:"Vale Forward TCU",structure:"TCU",state:"Armor",status:"Friendly",region:"Vale of the Silent"},
+  {date:"2026-04-12",time:"13:41",system:"H-UCD1",name:"Hostile Vale IHub",structure:"IHub",state:"Final",status:"Hostile",region:"Vale of the Silent"},
+  {date:"2026-04-12",time:"14:16",system:"FS-RFL",name:"Vale Northern Skyhook",structure:"Skyhook",state:"Final",status:"Friendly",region:"Vale of the Silent"},
+  {date:"2026-04-12",time:"14:58",system:"N-HSK0",name:"Vale Border TCU",structure:"TCU",state:"Armor",status:"Hostile",region:"Vale of the Silent"},
+  {date:"2026-04-12",time:"15:24",system:"Q-EHMJ",name:"Vale Rear IHub",structure:"IHub",state:"Final",status:"Friendly",region:"Vale of the Silent"},
+  {date:"2026-04-13",time:"10:15",system:"VFK-IV",name:"Deklein Sample IHub",structure:"IHub",state:"Final",status:"Friendly",region:"Deklein"},
+  {date:"2026-04-13",time:"10:45",system:"RQH-MY",name:"Pure Blind Sample TCU",structure:"TCU",state:"Armor",status:"Hostile",region:"Pure Blind"},
+  {date:"2026-04-13",time:"11:15",system:"YJ3-UT",name:"Branch Sample Astrahus",structure:"Astrahus",state:"Final",status:"Friendly",region:"Branch"},
+  {date:"2026-04-13",time:"11:45",system:"0M-103",name:"Tenal Sample IHub",structure:"IHub",state:"Armor",status:"Hostile",region:"Tenal"},
+  {date:"2026-04-13",time:"12:15",system:"FIO1-8",name:"Fade Sample Athanor",structure:"Athanor",state:"Final",status:"Friendly",region:"Fade"},
+  {date:"2026-04-13",time:"12:45",system:"PF-QHK",name:"Venal Sample Fortizar",structure:"Fortizar",state:"Final",status:"Hostile",region:"Venal"},
+];
+// ── Data persistence ──
+const TIMER_DATA_KEY = 'timerboardTimersV4';
+const TUTORIAL_SEEN_KEY = 'timerboardTutorialSeenV1';
+const TIMER_TEXT_LIMITS = {
+  region: 80,
+  system: 32,
+  name: 180,
+  structure: 64,
+  state: 32,
+  countdown: 32,
+  tag: 32,
+};
+const SYSTEM_REGION_LOOKUP = {
+  '00TY-J':'Pure Blind',
+  '7D-0SQ':'Pure Blind',
+  'Atioth':'Geminate',
+  'Z-Y7R7':'Pure Blind',
+  '6RCQ-V':'Pure Blind',
+  'Roua':'Geminate',
+  'TXME-A':'Pure Blind',
+  'B-9C24':'Pure Blind',
+  'O-BDXB':'Pure Blind',
+  'Q-7SUI':'Pure Blind',
+  'E-91FV':'Geminate',
+  '2IBE-N':'Pure Blind',
+  'RQH-MY':'Pure Blind',
+  'CL6-ZG':'Pure Blind',
+  '9-4RP2':'Pure Blind',
+  'VSJ-PP':'Geminate',
+  'XI-VUF':'Pure Blind',
+  'V-MZW0':'Cloud Ring',
+  'V-NZW0':'Geminate',
+  '6L78-1':'Geminate',
+  'U6D-9A':'Fade',
+  'D-I9HJ':'Geminate',
+  'QKTR-L':'Geminate',
+  'HJO-84':'Geminate',
+  'RD-G2R':'Pure Blind',
+  'Baratar':'Derelik',
+  'G-73MR':'Geminate',
+  'N-5476':'Delve',
+  'Korama':'Lonetrek',
+  'CX8-6K':'Delve',
+  '8CIX-S':'Delve',
+  'YJ3-UT':'Branch',
+  'FIO1-8':'Branch',
+  'Z3U-GI':'Branch',
+  'O-BY0Y':'Tribute',
+  'RLTG-3':'Tribute',
+  'SZ6-TA':'Tribute',
+  'P-FSQE':'Venal',
+  'N-Q5PW':'Tribute',
+  '2PLH-3':'Pure Blind',
+  'KMC-WI':'Pure Blind',
+  'CU9-T0':'Tribute',
+  '8W-OSE':'Branch',
+  'VL3I-M':'Tribute',
+  '6RQ9-A':'Geminate',
+  'TDE4-H':'Geminate'
+};
+
+function enrichTimerRegions(list){
+  return (Array.isArray(list) ? list : []).map(t => {
+    const region = (t.region && String(t.region).trim()) || SYSTEM_REGION_LOOKUP[t.system] || '';
+    return region ? {...t, region} : {...t};
+  });
+}
+
+function cleanTimerText(value, maxLen){
+  return String(value ?? '')
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLen);
+}
+
+function isValidTimerDate(value){
+  const s = String(value ?? '').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = new Date(s + 'T00:00:00Z');
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0,10) === s;
+}
+
+function isValidTimerTime(value){
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value ?? '').trim());
+}
+
+function normalizeTimerState(value){
+  const cleaned = cleanTimerText(value, TIMER_TEXT_LIMITS.state);
+  const key = stateKey(cleaned);
+  if(key === 'final') return 'Final';
+  if(key === 'armor') return 'Armor';
+  if(key === 'anchor') return 'Anchoring';
+  if(key === 'hull') return 'Hull';
+  return cleaned ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase() : 'Final';
+}
+
+function normalizeTimerStatus(value){
+  return String(value ?? '').trim() === 'Friendly' ? 'Friendly' : 'Hostile';
+}
+
+function sanitizeTimer(raw){
+  if(!raw || typeof raw !== 'object') return null;
+  const date = cleanTimerText(raw.date, 10);
+  const time = cleanTimerText(raw.time, 5);
+  if(!isValidTimerDate(date) || !isValidTimerTime(time)) return null;
+
+  const system = cleanTimerText(raw.system, TIMER_TEXT_LIMITS.system);
+  if(!system) return null;
+
+  const region = normalizeRegionName(cleanTimerText(raw.region, TIMER_TEXT_LIMITS.region));
+  const name = cleanTimerText(raw.name || '--', TIMER_TEXT_LIMITS.name) || '--';
+  const structure = normalizeStructureName(cleanTimerText(raw.structure, TIMER_TEXT_LIMITS.structure));
+
+  return {
+    date,
+    time,
+    region,
+    system,
+    name,
+    structure,
+    state: normalizeTimerState(raw.state),
+    status: normalizeTimerStatus(raw.status),
+    countdown: cleanTimerText(raw.countdown, TIMER_TEXT_LIMITS.countdown),
+    tag: cleanTimerText(raw.tag, TIMER_TEXT_LIMITS.tag),
+  };
+}
+
+function sanitizeTimerList(list){
+  return enrichTimerRegions((Array.isArray(list) ? list : []).map(sanitizeTimer).filter(Boolean));
+}
+
+function loadTimers(){
+  try{
+    const v = localStorage.getItem(TIMER_DATA_KEY);
+    if(!v) return sanitizeTimerList(RAW_TIMERS);
+    const arr = JSON.parse(v);
+    return Array.isArray(arr) ? sanitizeTimerList(arr) : sanitizeTimerList(RAW_TIMERS);
+  }catch(e){
+    return sanitizeTimerList(RAW_TIMERS);
+  }
+}
+function saveTimers(){
+  try{ localStorage.setItem(TIMER_DATA_KEY, JSON.stringify(TIMERS)); }catch(e){}
+}
+
+let TIMERS = loadTimers();
+
+// First-time tutorial
+function markTutorialSeen(){
+  try{ localStorage.setItem(TUTORIAL_SEEN_KEY, '1'); }catch(e){}
+}
+
+function positionTutorialPointer(){
+  const pointer=document.getElementById('tutorialPointer');
+  const importBtn=document.getElementById('importBtn');
+  if(!pointer||!importBtn||!document.body.classList.contains('tutorial-pointer-active')) return;
+  const r=importBtn.getBoundingClientRect();
+  pointer.style.left=Math.min(window.innerWidth-150, r.right+12)+'px';
+  pointer.style.top=Math.max(10, r.top+(r.height/2)-18)+'px';
+  pointer.style.display='flex';
+}
+
+function showTutorialPointer(){
+  document.body.classList.add('tutorial-pointer-active');
+  positionTutorialPointer();
+}
+
+function hideTutorialPointer(){
+  document.body.classList.remove('tutorial-pointer-active');
+  const pointer=document.getElementById('tutorialPointer');
+  if(pointer) pointer.style.display='none';
+}
+
+function openTutorial(force=false){
+  if(!force){
+    try{ if(localStorage.getItem(TUTORIAL_SEEN_KEY)==='1') return; }catch(e){}
+  }
+  const b=document.getElementById('tutorialBackdrop');
+  if(!b) return;
+  const importBackdrop=document.getElementById('importBackdrop');
+  if(importBackdrop) importBackdrop.style.display='none';
+  b.style.display='flex';
+  document.body.classList.add('modal-open');
+  markTutorialSeen();
+  showTutorialPointer();
+}
+
+function closeTutorial(){
+  const b=document.getElementById('tutorialBackdrop');
+  if(b) b.style.display='none';
+  hideTutorialPointer();
+  const importBackdrop=document.getElementById('importBackdrop');
+  if(!importBackdrop || importBackdrop.style.display==='none'){
+    document.body.classList.remove('modal-open');
+  }
+}
+
+function tutorialOpenImport(){
+  closeTutorial();
+  openImport();
+}
+
+// ── Import / Paste UI ──
+function openImport(){
+  const b=document.getElementById('importBackdrop');
+  const t=document.getElementById('importText');
+  const s=document.getElementById('importStatus');
+  if(!b||!t) return;
+  const tutorialBackdrop=document.getElementById('tutorialBackdrop');
+  if(tutorialBackdrop) tutorialBackdrop.style.display='none';
+  hideTutorialPointer();
+  s.textContent = '';
+  t.value = '';
+  b.style.display='flex';
+  document.body.classList.add('modal-open');
+  setTimeout(()=>t.focus(), 50);
+}
+function closeImport(){
+  const b=document.getElementById('importBackdrop');
+  if(b) b.style.display='none';
+  document.body.classList.remove('modal-open');
+}
+
+function pad2(n){
+  return String(n).padStart(2,'0');
+}
+
+function formatUtcDateTime(dt){
+  return {
+    date: `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth()+1)}-${pad2(dt.getUTCDate())}`,
+    time: `${pad2(dt.getUTCHours())}:${pad2(dt.getUTCMinutes())}`
+  };
+}
+
+function fixtureCountdown(dt, generatedAtMs){
+  const ms = dt.getTime() - generatedAtMs;
+  if(ms <= 0) return 'elapsed';
+  const totalMinutes = Math.max(1, Math.round(ms / 60000));
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  if(days) return `${days}d ${hours}h`;
+  if(hours) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
+function makeFixtureLine(generatedAtMs, offsetMinutes, region, system, name, structure, owner, state, tag){
+  const dt = new Date(generatedAtMs + offsetMinutes * 60000);
+  const parts = formatUtcDateTime(dt);
+  return `${parts.date} ${parts.time} [${region}] ${system} - ${name} [${structure}][${owner}][${state}] (${fixtureCountdown(dt, generatedAtMs)}) [#${tag}]`;
+}
+
+function generateTestFixtureText(){
+  const generatedAtMs = Date.now();
+  const refreshed = formatUtcDateTime(new Date(generatedAtMs));
+  const timers = [
+    [-240, 'Geminate', 'EOA-ZC', 'Elapsed Skyhook', 'Orbital Skyhook', 'FRTBM/FRT', 'Final', 'elapsed'],
+    [-180, 'Pure Blind', 'RD-G2R', 'Elapsed Astra', 'ASTRA', 'Hostile', 'Armor', 'elapsed'],
+    [-120, 'Vale of the Silent', 'TVN-FM', 'Elapsed POCO', 'POCO', 'Friendly', 'Hull', 'elapsed'],
+    [-60, 'Branch', 'BKG-Q2', 'Elapsed Drill', 'Metonx Moon Drill', 'CONDI', 'Armor', 'elapsed'],
+    [-30, 'Tenal', '0M-103', 'Elapsed TCU', 'TCU', 'Friendly', 'Final', 'elapsed'],
+    [15, 'Geminate', 'Y8R-XZ', 'Geminate Hostile Fort', 'Fortizar', 'INIT', 'Final', 'today'],
+    [30, 'Geminate', '8MG-J6', 'Geminate Ansiblex', 'ANSI', 'TIAAS/TEST', 'Armor', 'today'],
+    [45, 'Pure Blind', 'ROIR-Y', 'Pure Blind Keep Grid', 'Keepstar', 'Hostile', 'Final', 'today'],
+    [60, 'Pure Blind', 'F-NMX6', 'Pure Blind Skyhook', 'Skyhook', 'P3WN/NC', 'Armor', 'today'],
+    [75, 'Vale of the Silent', 'H-UCD1', 'Vale IHub', 'IHub', 'Hostile', 'Final', 'today'],
+    [90, 'Vale of the Silent', 'FS-RFL', 'Vale Cyno Beacon', 'Cyno Beacon', 'Friendly', 'Anchoring', 'today'],
+    [120, 'Deklein', 'VFK-IV', 'Deklein Sotiyo', 'Sotiyo', 'Friendly', 'Final', 'today'],
+    [150, 'Branch', 'BKG-Q2', 'Branch Azbel', 'Azbel', 'Hostile', 'Armor', 'today'],
+    [180, 'Tenal', '0M-103', 'Tenal Raitaru', 'Raitaru', 'FRTBM/FRT', 'Hull', 'today'],
+    [210, 'Venal', 'P-FSQE', 'Venal Cyno Jammer', 'Cyno Jammer', 'CONDI', 'Final', 'today'],
+    [240, 'Fade', 'C4C-Z4', 'Fade Athanor', 'Athanor', 'Friendly', 'Armor', 'today'],
+    [300, 'Venal', 'H-PA29', 'Venal Tatara', 'Tatara', 'UnknownCorp', 'Armor', 'today'],
+    [360, 'Deklein', '8S28-3', 'Deklein Route Fort', 'Fortizar', 'FRCC/FRT', 'Final', 'today'],
+    [420, 'Pure Blind', 'RQH-MY', 'Pure Blind Customs Office', 'POCO', 'Hostile', 'Final', 'today'],
+    [540, 'Fade', 'FIO1-8', 'Fade TCU', 'TCU', 'Friendly', 'Anchoring', 'today'],
+    [720, 'Geminate', 'JE1-36', 'Geminate Hull Sotiyo', 'Sotiyo', 'Friendly', 'Hull', 'today'],
+    [900, 'Venal', 'N-5476', 'Venal Keepstar', 'Keepstar', 'Hostile', 'Final', 'future'],
+    [1080, 'Pure Blind', '7D-0SQ', 'Pure Blind Fortizar', 'Fortizar', 'Friendly', 'Armor', 'future'],
+    [1260, 'Fade', '8W-OSE', 'Fade Raitaru', 'Raitaru', 'Hostile', 'Anchoring', 'future'],
+    [1440, 'Branch', 'BKG-Q2', 'Branch IHub', 'IHub', 'Friendly', 'Final', 'future'],
+    [1500, 'Geminate', 'BWF-ZZ', 'Stack Astra 01', 'Astrahus', 'Hostile', 'Armor', 'stack'],
+    [1520, 'Geminate', 'BWF-ZZ', 'Stack Astra 02', 'ASTRA', 'Friendly', 'Final', 'stack'],
+    [1540, 'Geminate', 'BWF-ZZ', 'Stack Drill 03', 'Metonx Moon Drill', 'Hostile', 'Armor', 'stack'],
+    [1560, 'Geminate', 'BWF-ZZ', 'Stack Skyhook 04', 'Skyhook', 'Hostile', 'Final', 'stack'],
+    [1580, 'Geminate', 'BWF-ZZ', 'Stack POCO 05', 'POCO', 'Friendly', 'Armor', 'stack'],
+    [1600, 'Geminate', 'BWF-ZZ', 'Stack Fort 06', 'Fortizar', 'INIT', 'Final', 'stack'],
+    [1620, 'Geminate', 'BWF-ZZ', 'Stack Ansi 07', 'Ansiblex Jump Bridge', 'TIAAS/TEST', 'Armor', 'stack'],
+    [1640, 'Geminate', 'BWF-ZZ', 'Stack Keep 08', 'Keepstar', 'Hostile', 'Final', 'stack'],
+    [1660, 'Geminate', 'BWF-ZZ', 'Stack Sotiyo 09', 'Sotiyo', 'Friendly', 'Final', 'stack'],
+    [1680, 'Geminate', 'BWF-ZZ', 'Stack Drill 10', 'Metenox Moon Drill', 'CONDI', 'Armor', 'stack'],
+    [1800, 'Geminate', 'TZL-WT', 'Geminate Skyhook', 'Orbital Skyhook', 'Hostile', 'Armor', 'future'],
+    [1980, 'Venal', '9-266Q', 'Venal Athanor', 'Athanor', 'Friendly', 'Final', 'future'],
+    [2160, 'Deklein', '8S28-3', 'Deklein Azbel', 'Azbel', 'Hostile', 'Hull', 'future'],
+    [2340, 'Vale of the Silent', 'MC6O-F', 'Vale Beacon', 'Cyno Beacon', 'Friendly', 'Anchoring', 'future'],
+    [2520, 'Branch', 'BKG-Q2', 'Branch Tatara', 'Tatara', 'Hostile', 'Final', 'future'],
+  ];
+  const fixtureTimerCount = timers.length;
+  const lines = [
+    'Timerboard curated regression fixture',
+    `Generated from the app on ${refreshed.date} ${refreshed.time} UTC.`,
+    `Expected valid timer lines: ${fixtureTimerCount}`,
+    'Expected intentional non-timer lines: 9',
+    'Coverage checks: elapsed, same-day, future, busy system, mapped regions, filters, map triage, and parser normalization.',
+    'Normalization checks: ASTRA -> Astrahus; Skyhook -> Orbital Skyhook; Metonx/Motonox -> Metenox Moon Drill; POCO -> Customs Office.',
+    'DTee',
+    'timerbot APP - generated fixture',
+    `Server last active 6 seconds ago with ${fixtureTimerCount} timers`,
+    '',
+  ];
+
+  return lines.concat(timers.map(t=>makeFixtureLine(generatedAtMs, ...t))).join('\n');
+}
+
+function loadTestFixture(){
+  const t=document.getElementById('importText');
+  const s=document.getElementById('importStatus');
+  if(!t) return;
+  t.value = generateTestFixtureText();
+  if(s) s.textContent = 'Inserted 40 sample timer lines into the paste box. Choose Import & Replace or Import & Append when ready.';
+  t.focus();
+}
+
+function normalizeStructureName(raw){
+  const x = (raw||'').toString().trim();
+  // remove surrounding brackets if present
+  let s = x.replace(/^[\[]|[\]]$/g,'').trim();
+  // drop leading emoji/non-letters (e.g. ⛺Fortizar)
+  s = s.replace(/^[^A-Za-z]+/,'').trim();
+  const lower = s.toLowerCase();
+
+  // Longer/more-specific names must come before shorter substrings they contain
+  // e.g. 'orbital skyhook' before 'skyhook', 'metenox moon drill' before 'moon drill'
+  const known = [
+    'keepstar','fortizar','sotiyo','azbel','tatara','athanor','raitaru','astrahus',
+    'ansiblex jump bridge','ansiblex','jump bridge',
+    'cyno jammer','cyno beacon',
+    'metenox moon drill','motonox moon drill','moon drill','metenox','metonx','motonox',
+    'orbital skyhook','skyhook','skyhhook',
+    'ihub','tcu',
+    // common abbreviations
+    'astra', // → Astrahus
+    'ansi',
+    'poco',
+  ];
+  // abbreviation map
+  const abbrev = {
+    'astra': 'Astrahus',
+    'ansi': 'Ansiblex Jump Bridge',
+    'poco': 'Customs Office',
+    'metenox moon drill': 'Metenox Moon Drill',
+    'motonox moon drill': 'Metenox Moon Drill',
+    'moon drill': 'Metenox Moon Drill',
+    'metenox': 'Metenox Moon Drill',
+    'metonx': 'Metenox Moon Drill',
+    'motonox': 'Metenox Moon Drill',
+    'orbital skyhook': 'Orbital Skyhook',
+    'skyhook': 'Orbital Skyhook',
+    'skyhhook': 'Orbital Skyhook',
+  };
+  for(const k of known){
+    if(lower.includes(k)){
+      if(k==='ihub') return 'IHub';
+      if(k==='tcu') return 'TCU';
+      if(abbrev[k]) return abbrev[k];
+      return k.split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+    }
+  }
+
+  // default title case first word
+  return s ? s.charAt(0).toUpperCase()+s.slice(1) : 'Unknown';
+}
+
+// Known structure keywords — used to detect which bracket field is the structure
+const STRUCT_KEYWORDS = [
+  'keepstar','fortizar','sotiyo','azbel','tatara','athanor','raitaru','astrahus','astra',
+  'ansiblex','jump bridge','cyno jammer','cyno beacon',
+  'metenox moon drill','motonox moon drill','moon drill','metenox','metonx','motonox',
+  'orbital skyhook','skyhook','skyhhook',
+  'ihub','tcu','ansi','poco','raitaru','sotiyo',
+];
+// Known state keywords
+const STATE_KEYWORDS = ['final','armor','armour','anchor','anchoring','hull'];
+
+function looksLikeStructure(s){ const l=s.toLowerCase(); return STRUCT_KEYWORDS.some(k=>l.includes(k)); }
+function looksLikeState(s){ const l=s.toLowerCase(); return STATE_KEYWORDS.some(k=>l===k||l.includes(k)); }
+function looksLikeOwner(s){ return !looksLikeStructure(s) && !looksLikeState(s); }
+
+const FRIENDLY_OWNER_TICKERS = new Set([
+  '.away/evil.','.los/frt','.red-/frt','.stor/test','8dir/test','b0rt/test','cacx/frt',
+  'drowi/test','frcc/frt','frt','frtbm/frt','k.d.j/test','ktro/test','lumbo/test',
+  'mace1/test','nc','nhpp/nc','p3wn/nc','sard./frt','sc-un/frt','sibsq/sb-sq',
+  'suad/test','test','tiaas/test','ukoc/test','upvot/test','xbda/test','yuese/frt'
+]);
+const HOSTILE_OWNER_TICKERS = new Set(['init','initiative','condi']);
+
+function classifyOwnerStatus(ownerRaw){
+  const key = String(ownerRaw||'').trim().toLowerCase();
+  if(key === 'friendly') return 'Friendly';
+  if(key === 'hostile') return 'Hostile';
+  if(FRIENDLY_OWNER_TICKERS.has(key)) return 'Friendly';
+  if(HOSTILE_OWNER_TICKERS.has(key)) return 'Hostile';
+  return 'Hostile';
+}
+
+// Parses lines like:
+// 2026-02-16 13:00 KMC-WI - Drill P5M2 [Athanor][Friendly][Final] (70:59) [#Auth]
+// 2026-04-09 16:29 [Geminate] D-I9HJ - Goonswarm Federation ihub [🛖IHUB][CONDI][Final] (1:42) [#Sov]
+// 2026-04-12 20:17 [Pure Blind] CL6-ZG - Microplastic of Pure Blind [initiative][astra][final] (77:22) [#NC]
+function normalizeRegionName(raw){
+  const s = String(raw||'').trim();
+  if(!s) return '';
+  return s.split(/\s+/).map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' ');
+}
+
+function extractRegionAndSystem(raw){
+  const sysRaw = String(raw||'').trim();
+  const regionMatch = sysRaw.match(/^\[([^\]]+)\]\s*/);
+  const region = regionMatch ? normalizeRegionName(regionMatch[1]) : '';
+  const system = (regionMatch ? sysRaw.slice(regionMatch[0].length) : sysRaw).trim();
+  return { region, system };
+}
+
+function parseDiscordTimerLine(line){
+  const l = (line||'').trim();
+  if(!l) return null;
+
+  const re = /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})\s+(.+?)\s+-\s+(.+?)\s+\[(.+?)\]\[([^\]]+)\]\[([^\]]+)\]\s*(?:\(([^)]+)\))?\s*(?:\[(#[^\]]+)\])?\s*$/i;
+  const m = l.match(re);
+  if(!m) return null;
+
+  const date = m[1];
+  const time = m[2];
+
+  // Extract and strip optional [Region] prefix (e.g. "[Geminate] D-I9HJ")
+  const { region, system } = extractRegionAndSystem(m[3]);
+
+  const name   = m[4].trim();
+  const f1     = m[5].trim(); // first bracket
+  const f2     = m[6].trim(); // second bracket
+  const f3     = m[7].trim(); // third bracket
+  const countdown = (m[8]||'').trim();
+  const tag       = (m[9]||'').trim();
+
+  // Determine which field is structure vs owner vs state.
+  // Normal order:  [Structure][Owner/Friendly/Hostile][State]
+  // Reversed order:[Owner][Structure][State]  (rare, seen in Initiative lines)
+  let structureRaw, ownerRaw, stateRaw;
+
+  if(looksLikeStructure(f1)){
+    // Standard: [struct][owner][state]
+    structureRaw = f1; ownerRaw = f2; stateRaw = f3;
+  } else if(looksLikeStructure(f2)){
+    // Reversed: [owner][struct][state]
+    ownerRaw = f1; structureRaw = f2; stateRaw = f3;
+  } else {
+    // Fallback to standard positions
+    structureRaw = f1; ownerRaw = f2; stateRaw = f3;
+  }
+
+  const status = classifyOwnerStatus(ownerRaw);
+
+  // Normalise state: hull → Hull
+  const stateNorm = stateRaw.charAt(0).toUpperCase() + stateRaw.slice(1).toLowerCase();
+
+  return {
+    date, time, region, system, name,
+    structure: normalizeStructureName(structureRaw),
+    state: stateNorm,
+    status,
+    countdown, tag
+  };
+}
+
+function looksLikeTimerLine(line){
+  return /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}\b/.test(String(line||'').trim());
+}
+
+function importTimers(mode){
+  const text = (document.getElementById('importText')||{}).value || '';
+  const statusEl = document.getElementById('importStatus');
+  const lines = text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+
+  const parsed = [];
+  const failed = [];
+
+  for(const line of lines){
+    const obj = parseDiscordTimerLine(line);
+    const timer = obj ? sanitizeTimer(obj) : null;
+    if(timer) parsed.push(timer);
+    else if(looksLikeTimerLine(line)) failed.push(line);
+  }
+
+  if(parsed.length===0){
+    if(statusEl){
+      statusEl.textContent = failed.length
+        ? 'No timers parsed. Check the format (expects: date time system - name [Structure][Friendly/Hostile][State] ...).'
+        : 'No timers found in pasted text.';
+    }
+    return;
+  }
+
+  if(mode==='replace') TIMERS = parsed;
+  else TIMERS = TIMERS.concat(parsed);
+
+  // sort
+  TIMERS.sort((a,b)=>{
+    const da = a.date+' '+a.time;
+    const db = b.date+' '+b.time;
+    return da.localeCompare(db);
+  });
+
+  saveTimers();
+  if(statusEl){
+    statusEl.textContent = `Imported ${parsed.length} timer(s). ${failed.length? 'Failed to parse '+failed.length+' line(s).':''}`;
+  }
+  renderAll();
+}
+
+function renderAll(){
+  try{ renderStats(); }catch(e){}
+  try{ render(); }catch(e){}
+}
+
+function clearTimers(){
+  TIMERS = [];
+  saveTimers();
+  renderAll();
+  const statusEl=document.getElementById('importStatus');
+  if(statusEl) statusEl.textContent='Cleared.';
+}
+
+/* ════════════════════════════════
+   HELPERS
+════════════════════════════════ */
+const MAJOR = ["Keepstar","Fortizar"];
+const VISUAL_MAJOR_STRUCTURES = ["Keepstar","Sotiyo","Fortizar"];
+function todClass(h){const n=parseInt(h,10);return n<12?'morning':n<18?'afternoon':'evening';}
+function stateKey(s){const l=(s||'').toLowerCase();return l==='final'?'final':l==='armor'||l==='armour'?'armor':l.includes('anchor')?'anchor':l==='hull'?'hull':'';}
+
+function isVisualMajorStructure(structure){return VISUAL_MAJOR_STRUCTURES.includes(structure);}
+function isVisualMajorTimer(timer){return isVisualMajorStructure(timer.structure);}
+function structClass(s){return s==='Keepstar'?'keepstar':s==='Sotiyo'?'sotiyo':s==='Fortizar'?'fortizar':'';}
+function timerDT(d,t){return new Date(d+'T'+t+':00Z');}
+function fmtDate(d){return new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});}
+function fmtDateShort(d){return new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});}
+function countdown(ms){
+  if(ms<=0)return'elapsed';
+  const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;
+  if(h>48)return Math.floor(h/24)+'d '+h%24+'h';
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sc).padStart(2,'0');
+}
+function cdClass(ms){if(ms<=0)return'';if(ms<30*60*1000)return'urgent';if(ms<2*3600*1000)return'soon';return'';}
+function isElapsed(t){return timerDT(t.date,t.time).getTime()<Date.now();}
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>"']/g, ch=>({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[ch]));
+}
+const escapeAttr = escapeHtml;
+
+/* ════════════════════════════════
+   STATE
+════════════════════════════════ */
+let currentView='table';
+let activeMapRegion = '';
+let mapTriagePreset = 'all';
+const filterState = {
+  side: new Set(),      // Friendly / Hostile
+  state: new Set(),     // Final / Armor / Hull / Anchoring
+  major: false,
+  regions: new Set(),
+  structures: new Set() // excluded structure types, e.g. Fortizar, Keepstar...
+};
+const collapsed=new Set();
+
+
+
+/* ════════════════════════════════
+   THEME
+════════════════════════════════ */
+function toggleTheme(){
+  const html=document.documentElement;
+  const isLight=html.getAttribute('data-theme')==='light';
+  if(isLight){html.removeAttribute('data-theme');document.getElementById('themeIcon').textContent='';document.getElementById('themeLabel').textContent='Light';}
+  else{html.setAttribute('data-theme','light');document.getElementById('themeIcon').textContent='';document.getElementById('themeLabel').textContent='Dark';}
+}
+
+/* ════════════════════════════════
+   VIEW SWITCHING
+════════════════════════════════ */
+function setView(v,btn){
+  mapSysLeave();
+  currentView=v;
+  if(v !== 'map' || (btn && btn.id === 'vbMap')) activeMapRegion = '';
+  document.querySelectorAll('.view-btn').forEach(b=>{
+    b.classList.remove('active');
+    b.removeAttribute('aria-current');
+  });
+  if(btn){
+    btn.classList.add('active');
+    btn.setAttribute('aria-current','page');
+  }
+  const brand=document.getElementById('brandHome');
+  if(brand) brand.classList.toggle('can-return', v!=='table');
+  // day nav only useful in table view
+  document.getElementById('dayNav').style.display=(v==='table')?'flex':'none';
+  render();
+}
+
+function goHomeView(){
+  setView('table', document.getElementById('vbTable'));
+}
+
+function mapShowUniverse(){
+  mapSysLeave();
+  activeMapRegion = '';
+  setView('map', document.getElementById('vbMap'));
+}
+
+/* ════════════════════════════════
+   FILTERS (multi-select + structure)
+════════════════════════════════ */
+function resetFilters(btn){
+  // Clear all filter state
+  filterState.side.clear();
+  filterState.state.clear();
+  filterState.major = false;
+  filterState.regions.clear();
+  filterState.structures.clear();
+
+  syncFilterUi();
+  render();
+}
+
+function toggleFilterBtn(btn){
+  const group = btn.dataset.group;
+  const value = btn.dataset.value;
+  if(!group) return;
+
+  if(group==='major'){
+    filterState.major = !filterState.major;
+  } else if(group==='side'){
+    if(filterState.side.has(value)) filterState.side.delete(value);
+    else filterState.side.add(value);
+  } else if(group==='state'){
+    if(filterState.state.has(value)) filterState.state.delete(value);
+    else filterState.state.add(value);
+  }
+
+  syncFilterUi();
+  render();
+}
+
+function stateBucket(state){
+  const k = stateKey(state); // returns 'final','armor','hull','anchor'
+  if(k==='final') return 'Final';
+  if(k==='armor') return 'Armor';
+  if(k==='hull') return 'Hull';
+  return 'Anchoring';
+}
+
+function passes(t){
+  // Side filters
+  if(filterState.side.size>0 && !filterState.side.has(t.status)) return false;
+
+  // Major filter
+  if(filterState.major && !MAJOR.includes(t.structure)) return false;
+
+  // State filters (bucketed)
+  if(filterState.state.size>0){
+    const b = stateBucket(t.state);
+    if(!filterState.state.has(b)) return false;
+  }
+
+  // Region filter
+  if(filterState.regions.size>0 && !filterState.regions.has(t.region || 'Unknown')) return false;
+
+  // Structure type exclusions
+  if(filterState.structures.has(t.structure)) return false;
+
+  return true;
+}
+
+function hasActiveFilters(){
+  return filterState.side.size>0 || filterState.state.size>0 || filterState.major || filterState.regions.size>0 || filterState.structures.size>0;
+}
+
+function setFilterButtonsFromState(){
+  document.querySelectorAll('#filterBar .tool-btn[data-group]').forEach(btn=>{
+    const group = btn.dataset.group;
+    const value = btn.dataset.value;
+    if(group==='major') btn.classList.toggle('active', filterState.major);
+    else if(group==='side') btn.classList.toggle('active', filterState.side.has(value));
+    else if(group==='state') btn.classList.toggle('active', filterState.state.has(value));
+  });
+  const allBtn = document.querySelector('#filterBar [data-role="reset"]');
+  if(allBtn) allBtn.classList.toggle('active', !hasActiveFilters());
+}
+
+function updateActiveFilterChips(){
+  const wrap = document.getElementById('activeFilters');
+  if(!wrap) return;
+  const chips = [];
+  if(filterState.side.size) chips.push({action:'clear-side-filter', label:Array.from(filterState.side).sort().join(', ')});
+  if(filterState.state.size) chips.push({action:'clear-state-filter', label:Array.from(filterState.state).sort().join(', ')});
+  if(filterState.major) chips.push({action:'clear-major-filter', label:'Major'});
+  if(filterState.regions.size) chips.push({action:'clear-region-filter', label:`${filterState.regions.size} region${filterState.regions.size===1?'':'s'}`});
+  if(filterState.structures.size) chips.push({action:'clear-structure-filter', label:`${filterState.structures.size} hidden structure${filterState.structures.size===1?'':'s'}`});
+  wrap.classList.toggle('has-filters', chips.length>0);
+  wrap.innerHTML = chips.length
+    ? `<span class="active-filter-label">Active filters:</span>${chips.map(chip=>`<button class="filter-chip" data-action="${escapeAttr(chip.action)}" title="Clear ${escapeAttr(chip.label)}">${escapeHtml(chip.label)}</button>`).join('')}`
+    : '';
+}
+
+function syncFilterUi(){
+  setFilterButtonsFromState();
+  updateRegionSummary();
+  updateStructureSummary();
+  updateActiveFilterChips();
+}
+
+/* ── Region dropdown ── */
+function updateRegionSummary(){
+  const summary = document.getElementById('regionSummary');
+  if(!summary) return;
+  const n = filterState.regions.size;
+  summary.textContent = n ? `Region (${n}) v` : 'Region v';
+
+  const allBtn = document.querySelector('#filterBar [data-role="reset"]');
+  if(n && allBtn) allBtn.classList.remove('active');
+  if(!n && filterState.side.size===0 && filterState.state.size===0 && !filterState.major && filterState.structures.size===0){
+    if(allBtn) allBtn.classList.add('active');
+  }
+}
+
+function clearRegionFilter(ev){
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  filterState.regions.clear();
+  document.querySelectorAll('#regionOptions input[type="checkbox"]').forEach(cb=>cb.checked=false);
+  syncFilterUi();
+  render();
+}
+
+function buildRegionFilterOptions(){
+  const wrap = document.getElementById('regionOptions');
+  if(!wrap) return;
+
+  const uniq = Array.from(new Set(TIMERS.map(t=>t.region || 'Unknown'))).sort((a,b)=>a.localeCompare(b));
+  wrap.innerHTML = uniq.map(r=>{
+    const id = `rg_${r.replace(/[^a-z0-9]+/gi,'_')}`;
+    const checked = filterState.regions.has(r) ? 'checked' : '';
+    return `<label class="struct-opt" for="${escapeAttr(id)}">
+      <input id="${escapeAttr(id)}" type="checkbox" ${checked} data-region-filter="${escapeAttr(r)}">
+      <span>${escapeHtml(r)}</span>
+    </label>`;
+  }).join('');
+  wrap.querySelectorAll('input[data-region-filter]').forEach(cb=>{
+    cb.addEventListener('change', ()=>onRegionToggle(cb.dataset.regionFilter, cb.checked));
+  });
+
+  syncFilterUi();
+}
+
+function onRegionToggle(regionName, isChecked){
+  if(isChecked) filterState.regions.add(regionName);
+  else filterState.regions.delete(regionName);
+
+  syncFilterUi();
+  render();
+}
+
+/* ── Structure dropdown ── */
+function updateStructureSummary(){
+  const summary = document.getElementById('structSummary');
+  if(!summary) return;
+  const n = filterState.structures.size;
+  summary.textContent = n ? `Structure (${n} hidden) v` : 'Structure v';
+
+  // If structure exclusions exist, ensure All is not active
+  const allBtn = document.querySelector('#filterBar [data-role="reset"]');
+  if(n && allBtn) allBtn.classList.remove('active');
+  if(!n && filterState.side.size===0 && filterState.state.size===0 && !filterState.major && filterState.regions.size===0){
+    if(allBtn) allBtn.classList.add('active');
+  }
+}
+
+function clearStructureFilter(ev){
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  filterState.structures.clear();
+  document.querySelectorAll('#structOptions input[type="checkbox"]').forEach(cb=>cb.checked=true);
+  syncFilterUi();
+  render();
+}
+
+function clearSideFilter(ev){
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  filterState.side.clear();
+  syncFilterUi();
+  render();
+}
+
+function clearStateFilter(ev){
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  filterState.state.clear();
+  syncFilterUi();
+  render();
+}
+
+function clearMajorFilter(ev){
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  filterState.major = false;
+  syncFilterUi();
+  render();
+}
+
+function buildStructureFilterOptions(){
+  const wrap = document.getElementById('structOptions');
+  if(!wrap) return;
+
+  // Unique structure types from all timers (not filtered)
+  const uniq = Array.from(new Set(TIMERS.map(t=>t.structure))).sort((a,b)=>a.localeCompare(b));
+  wrap.innerHTML = uniq.map(s=>{
+    const id = `st_${s.replace(/[^a-z0-9]+/gi,'_')}`;
+    const checked = filterState.structures.has(s) ? '' : 'checked';
+    return `<label class="struct-opt" for="${escapeAttr(id)}">
+      <input id="${escapeAttr(id)}" type="checkbox" ${checked} data-structure-filter="${escapeAttr(s)}">
+      <span>${escapeHtml(s)}</span>
+    </label>`;
+  }).join('');
+  wrap.querySelectorAll('input[data-structure-filter]').forEach(cb=>{
+    cb.addEventListener('change', ()=>onStructureToggle(cb.dataset.structureFilter, cb.checked));
+  });
+
+  syncFilterUi();
+}
+
+function onStructureToggle(structName, isChecked){
+  if(isChecked) filterState.structures.delete(structName);
+  else filterState.structures.add(structName);
+
+  syncFilterUi();
+  render();
+}
+
+function closeFilterDropdownsOnOutsideClick(ev){
+  if(ev.target.closest('.struct-dd')) return;
+  document.querySelectorAll('.struct-dd[open]').forEach(dd=>dd.removeAttribute('open'));
+}
+
+document.addEventListener('click', closeFilterDropdownsOnOutsideClick);
+/* ════════════════════════════════
+   COLLAPSE (table view)
+════════════════════════════════ */
+function toggleDay(date){
+  if(collapsed.has(date))collapsed.delete(date);else collapsed.add(date);
+  const el=document.getElementById('dg-'+date);
+  if(el)el.classList.toggle('collapsed',collapsed.has(date));
+}
+function collapseAll(){document.querySelectorAll('.date-group[id^="dg-"]').forEach(g=>{collapsed.add(g.id.replace('dg-',''));g.classList.add('collapsed');});}
+function expandAll(){collapsed.clear();document.querySelectorAll('.date-group[id^="dg-"]').forEach(g=>g.classList.remove('collapsed'));}
+function jumpToDay(date){
+  collapsed.delete(date);
+  const el=document.getElementById('dg-'+date);
+  if(el){el.classList.remove('collapsed');el.scrollIntoView({behavior:'smooth',block:'start'});}
+}
+document.addEventListener('click', (e)=>{
+  const jumpBtn = e.target.closest('[data-jump-date]');
+  if(jumpBtn){
+    e.preventDefault();
+    jumpToDay(jumpBtn.getAttribute('data-jump-date'));
+    return;
+  }
+  const dateHeader = e.target.closest('[data-toggle-date]');
+  if(dateHeader){
+    toggleDay(dateHeader.getAttribute('data-toggle-date'));
+  }
+});
+
+function decodeAttrValue(value){
+  try{ return decodeURIComponent(value || ''); }catch(e){ return value || ''; }
+}
+
+document.addEventListener('click', (e)=>{
+  const actionEl = e.target.closest('[data-action]');
+  if(actionEl){
+    const action = actionEl.dataset.action;
+    if(action === 'home') goHomeView();
+    else if(action === 'theme') toggleTheme();
+    else if(action === 'open-import') openImport();
+    else if(action === 'load-test-fixture') loadTestFixture();
+    else if(action === 'open-tutorial') openTutorial(true);
+    else if(action === 'close-import') closeImport();
+    else if(action === 'close-tutorial') closeTutorial();
+    else if(action === 'tutorial-open-import') tutorialOpenImport();
+    else if(action === 'reset-filters') resetFilters(actionEl);
+    else if(action === 'clear-side-filter') clearSideFilter(e);
+    else if(action === 'clear-state-filter') clearStateFilter(e);
+    else if(action === 'clear-major-filter') clearMajorFilter(e);
+    else if(action === 'clear-region-filter') clearRegionFilter(e);
+    else if(action === 'clear-structure-filter') clearStructureFilter(e);
+    else if(action === 'clear-timers') clearTimers();
+    else if(action === 'expand-all') expandAll();
+    else if(action === 'collapse-all') collapseAll();
+    else if(action === 'map-universe') mapShowUniverse();
+    return;
+  }
+
+  const importBtn = e.target.closest('[data-import-mode]');
+  if(importBtn){
+    importTimers(importBtn.dataset.importMode);
+    return;
+  }
+
+  const viewBtn = e.target.closest('[data-view]');
+  if(viewBtn){
+    setView(viewBtn.dataset.view, viewBtn);
+    return;
+  }
+
+  const filterBtn = e.target.closest('#filterBar .tool-btn[data-group]');
+  if(filterBtn){
+    toggleFilterBtn(filterBtn);
+    return;
+  }
+
+  const mapRegion = e.target.closest('[data-map-region]');
+  if(mapRegion){
+    mapSelectRegion(decodeAttrValue(mapRegion.dataset.mapRegion));
+  }
+});
+
+document.addEventListener('change', (e)=>{
+  if(e.target.matches('.map-triage-select')){
+    setMapTriagePreset(e.target.value);
+  }
+});
+
+document.addEventListener('mouseover', (e)=>{
+  const sysNode = e.target.closest('[data-map-hover-system][data-map-hover-timers]');
+  if(sysNode && !sysNode.contains(e.relatedTarget)){
+    mapSysHover(e, decodeAttrValue(sysNode.dataset.mapHoverSystem), sysNode.dataset.mapHoverTimers);
+    return;
+  }
+
+  const regionNode = e.target.closest('[data-map-hover-region][data-map-hover-timers]');
+  if(regionNode && !regionNode.contains(e.relatedTarget)){
+    mapRegionHover(e, regionNode.dataset.mapHoverRegion, regionNode.dataset.mapHoverTimers);
+  }
+});
+
+document.addEventListener('mouseout', (e)=>{
+  const mapNode = e.target.closest('[data-map-hover-timers]');
+  if(mapNode && !mapNode.contains(e.relatedTarget)){
+    mapSysLeave();
+  }
+});
+
+/* ════════════════════════════════
+   STATS
+════════════════════════════════ */
+function renderStats(){
+  const a=TIMERS;
+  const chips=[
+    {l:'Total',   v:a.length,                                           c:''},
+    {l:'Friendly',v:a.filter(t=>t.status==='Friendly').length,          c:'s-ours'},
+    {l:'Hostile', v:a.filter(t=>t.status==='Hostile').length,           c:'s-theirs'},
+    {l:'Major',   v:a.filter(t=>MAJOR.includes(t.structure)).length,    c:'s-major'},
+    {l:'In Armor',v:a.filter(t=>t.state.toLowerCase()==='armor').length,c:'s-major'},
+  ];
+  document.getElementById('statsBar').innerHTML=chips.map(c=>`<div class="stat-chip ${c.c}"><div class="stat-value">${c.v}</div><div class="stat-label">${c.l}</div></div>`).join('');
+}
+
+/* ════════════════════════════════
+   DAY NAV
+════════════════════════════════ */
+function renderDayNav(dates,todayStr){
+  const nav=document.getElementById('dayNav');
+  if(!nav)return;
+  const btns=dates.map(d=>{
+    const label=new Date(d+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
+    const iT=d===todayStr;
+    return`<button class="day-nav-btn${iT?' is-today':''}" data-jump-date="${escapeAttr(d)}">${iT?'▶ ':''}${label}</button>`;
+  }).join('');
+  nav.innerHTML=`<span class="filter-label">Days:</span>${btns}<div class="day-nav-sep"><button class="tool-btn" data-action="expand-all">Expand all</button><button class="tool-btn" data-action="collapse-all">Collapse all</button></div>`;
+}
+
+/* ════════════════════════════════
+   TIMELINE BAR
+════════════════════════════════ */
+function renderTimeline(){
+  const bar=document.getElementById('timelineBar');if(!bar)return;
+  const now=new Date();
+  const secs=now.getUTCHours()*3600+now.getUTCMinutes()*60+now.getUTCSeconds();
+  const pct=(secs/86400)*100;
+  const timeStr=String(now.getUTCHours()).padStart(2,'0')+':'+String(now.getUTCMinutes()).padStart(2,'0');
+  let html=`<div class="timeline-fill" style="width:${pct}%"></div>`;
+  for(let h=2;h<24;h+=2){const x=(h/24)*100;html+=`<div class="timeline-tick" style="left:${x}%"></div><div class="timeline-tick-label" style="left:${x}%">${String(h).padStart(2,'0')}</div>`;}
+  const todayStr=now.toISOString().split('T')[0];
+  const todayTimers=TIMERS.filter(t=>t.date===todayStr);
+  todayTimers.forEach(t=>{
+    const[th,tm]=t.time.split(':').map(Number);
+    const x=((th*3600+tm*60)/86400)*100;
+    const elapsed=(th*60+tm)<(now.getUTCHours()*60+now.getUTCMinutes());
+    const col=t.status==='Hostile'?'var(--red)':elapsed?'var(--text-3)':'var(--green)';
+    html+=`<div title="${escapeAttr(`${t.time} UTC - ${t.system}`)}" style="position:absolute;left:${x}%;top:50%;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;background:${col};opacity:${elapsed?.4:.85};z-index:3;"></div>`;
+  });
+  const cp=Math.min(Math.max(pct,4),96);
+  html+=`<div class="timeline-now-label" style="left:${cp}%">${timeStr}</div>`;
+  bar.innerHTML=html;
+  const elapsedCount=todayTimers.filter(t=>{const[th,tm]=t.time.split(':').map(Number);return(th*60+tm)<(now.getUTCHours()*60+now.getUTCMinutes());}).length;
+  const el=document.getElementById('timelineElapsedCount');
+  if(el)el.innerHTML=todayTimers.length?`Today: <span>${elapsedCount}</span>/${todayTimers.length} elapsed`:'';
+}
+
+/* ════════════════════════════════
+   TABLE VIEW
+════════════════════════════════ */
+function renderTable(list,groups,dates,todayStr){
+  renderDayNav(dates,todayStr);
+  return`<div class="view-table active-view">`+dates.map(date=>{
+    const rows=groups[date],iT=date===todayStr,isC=collapsed.has(date);
+    const trs=rows.map(t=>{
+      const tod=todClass(t.time.split(':')[0]),maj=isVisualMajorTimer(t),sk=stateKey(t.state),hostile=t.status==='Hostile';
+      const dt=timerDT(t.date,t.time),ms=dt.getTime()-Date.now(),elp=ms<=0;
+      const rc=[tod,maj?'major':'',hostile?'hostile':'',elp?'elapsed':''].filter(Boolean).join(' ');
+      return`<tr class="${rc}">
+        <td style="width:22px;text-align:center">${maj?'<span class="major-star">★</span>':''}</td>
+        <td class="col-tod" style="width:24px"><span class="tod-pill ${tod}"></span></td>
+        <td style="width:82px"><div class="cell-time">${escapeHtml(t.time)}</div><div class="countdown${cdClass(ms)?' '+cdClass(ms):''}" data-dt="${escapeAttr(dt.toISOString())}">${elp?'elapsed':countdown(ms)}</div></td>
+        <td style="width:100px;font-size:10px;color:var(--text-3);font-family:var(--font-mono);white-space:nowrap">${escapeHtml(t.region||'--')}</td>
+        <td style="width:100px"><span class="cell-system">${escapeHtml(t.system)}</span></td>
+        <td class="col-name"><span class="cell-name" title="${escapeAttr(t.name)}">${escapeHtml(t.name||'--')}</span></td>
+        <td><span class="struct-badge ${structClass(t.structure)}">${escapeHtml(t.structure)}</span></td>
+        <td><span class="state-badge ${sk}">${escapeHtml(t.state)}</span></td>
+        <td><span class="status-dot ${t.status==='Friendly'?'ours':'theirs'}">${t.status==='Friendly'?'Ours':'Theirs'}</span></td>
+      </tr>`;
+    }).join('');
+    return`<div class="date-group${isC?' collapsed':''}" id="dg-${date}">
+      <div class="date-header" data-toggle-date="${escapeAttr(date)}">
+        <span class="date-chevron">▾</span>
+        <div class="date-label${iT?' today':''}">${iT?'▶ Today · ':''}${fmtDate(date)}</div>
+        <div class="date-line"></div>
+        <div class="date-count">${rows.length} timer${rows.length!==1?'s':''}</div>
+      </div>
+      <div class="date-body"><table class="timer-table">
+        <thead><tr><th></th><th class="col-tod">TOD</th><th>Time (UTC)</th><th>Region</th><th>System</th><th class="col-name">Name</th><th>Structure</th><th>State</th><th>Owner</th></tr></thead>
+        <tbody>${trs}</tbody>
+      </table></div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+/* ════════════════════════════════
+   COMPACT CARD VIEW
+════════════════════════════════ */
+function renderGrid(list,groups,dates,todayStr){
+  // Sort ALL timers chronologically across days
+  const sorted=[...list].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+
+  let html='<div class="view-grid active-view">';
+  let lastDate=null;
+
+  sorted.forEach(t=>{
+    // Date section header when date changes
+    if(t.date!==lastDate){
+      if(lastDate!==null) html+='</div>'; // close previous compact-grid
+      const iT=t.date===todayStr;
+      const label=fmtDate(t.date);
+      const dayCount=groups[t.date]?groups[t.date].length:0;
+      html+=`<div class="compact-section-header${iT?' today':''}">
+        ${iT?'▶ Today — ':''}${label}
+        <span class="dsh-count">${dayCount} timer${dayCount!==1?'s':''}</span>
+      </div>`;
+      html+='<div class="compact-grid">';
+      lastDate=t.date;
+    }
+
+    const tod=todClass(t.time.split(':')[0]);
+    const maj=isVisualMajorTimer(t);
+    const hostile=t.status==='Hostile';
+    const sk=stateKey(t.state);
+    const sc=structClass(t.structure);
+    const dt=timerDT(t.date,t.time);
+    const ms=dt.getTime()-Date.now();
+    const elp=ms<=0;
+    const cdc=cdClass(ms);
+    const cc=[tod,maj?'major':'',hostile?'hostile':'',elp?'elapsed':''].filter(Boolean).join(' ');
+    // Tooltip with full info
+    const tip=`${t.date} ${t.time} UTC - ${t.system} - ${t.name||'--'} - ${t.structure} - ${t.state}`;
+
+    html+=`<div class="dc ${cc}" title="${escapeAttr(tip)}">
+      ${maj?'<span class="dc-star">★</span>':''}
+      <span class="dc-time">${escapeHtml(t.time)}</span>
+      <span class="dc-system">${escapeHtml(t.system)}</span>
+      <span class="dc-badge ${sc}">${escapeHtml(t.structure)}</span>
+      <span class="dc-state ${sk}">${escapeHtml(t.state)}</span>
+      <span class="dc-dot ${hostile?'theirs':'ours'}"></span>
+      <span class="dc-cd${cdc?' '+cdc:''}" data-dt="${escapeAttr(dt.toISOString())}">${elp?'done':countdown(ms)}</span>
+    </div>`;
+  });
+
+  if(lastDate!==null) html+='</div>'; // close last compact-grid
+  html+='</div>';
+  return html;
+}
+
+/* ════════════════════════════════
+   TIMELINE VIEW
+   Horizontal 24h axis, pills at time position
+   One swim-lane row per timer
+════════════════════════════════ */
+function renderGantt(list,groups,dates,todayStr){
+  const HOURS=24;
+  const PX_PER_HOUR=80; // 80px per hour = 1920px wide canvas
+  const TOTAL_W=HOURS*PX_PER_HOUR;
+  const now=new Date();
+  const nowSecs=now.getUTCHours()*3600+now.getUTCMinutes()*60+now.getUTCSeconds();
+  const nowPct=(nowSecs/86400)*100;
+
+  // Legend
+  let legendHtml=`<div class="tl-legend">
+    <span class="tl-legend-item"><span class="tl-legend-swatch" style="background:rgba(61,158,106,.18);border-color:rgba(61,158,106,.5)"></span>Friendly</span>
+    <span class="tl-legend-item"><span class="tl-legend-swatch" style="background:rgba(192,64,74,.18);border-color:rgba(192,64,74,.5)"></span>Hostile</span>
+    <span class="tl-legend-item"><span class="tl-legend-swatch" style="background:rgba(176,122,32,.22);border-color:rgba(176,122,32,.6)"></span>★ Major</span>
+    <span style="margin-left:auto;font-family:var(--font-mono);font-size:9px;">Scroll → to see full day &nbsp;|&nbsp; Hover pill for details</span>
+  </div>`;
+
+  let html='<div class="view-gantt active-view">'+legendHtml;
+
+  dates.forEach(date=>{
+    const rows=groups[date],iT=date===todayStr;
+    html+=`<div class="tl-section">
+      <div class="tl-section-header${iT?' today':''}">
+        ${iT?'▶ Today — ':''}${fmtDate(date)}
+        <span class="dsh-count">${rows.length} timer${rows.length!==1?'s':''}</span>
+      </div>
+      <div class="tl-scroll">
+        <div class="tl-inner" style="width:${TOTAL_W}px">`;
+
+    // ── Hour axis ──
+    html+='<div class="tl-axis">';
+    for(let h=0;h<HOURS;h++){
+      html+=`<div class="tl-axis-hour" style="width:${PX_PER_HOUR}px;flex:none;">${String(h).padStart(2,'0')}:00</div>`;
+    }
+    html+='</div>'; // tl-axis
+
+    // ── Elapsed shading for today ──
+    if(iT){
+      const elapsedW=(nowSecs/86400)*TOTAL_W;
+      html+=`<div class="tl-elapsed-overlay" style="width:${elapsedW}px"></div>`;
+      // Now line
+      html+=`<div class="tl-now-line" style="left:${elapsedW}px">
+        <div class="tl-now-time" style="left:${elapsedW}px">${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}</div>
+      </div>`;
+    }
+
+    // ── Timer rows ──
+    html+='<div class="tl-rows">';
+    rows.forEach(t=>{
+      const[th,tm]=t.time.split(':').map(Number);
+      const timerSecs=th*3600+tm*60;
+      const pillLeft=(timerSecs/86400)*TOTAL_W;
+      const maj=isVisualMajorTimer(t);
+      const hostile=t.status==='Hostile';
+      const sk=stateKey(t.state);
+      const dt=timerDT(t.date,t.time);
+      const ms=dt.getTime()-Date.now();
+      const elp=ms<=0;
+      const cdc=cdClass(ms);
+      const rowCls=['tl-row',hostile?'hostile':'',elp?'elapsed':''].filter(Boolean).join(' ');
+      const pillCls=['tl-pill',hostile?'theirs':'ours',maj?'major':'',elp?'elapsed':''].filter(Boolean).join(' ');
+
+      // Build pill label: ★ system · structure · ETA
+      const etaStr=elp?'done':(cdc?`<b>${countdown(ms)}</b>`:countdown(ms));
+      const pillLabel=`${maj?'<span class="tl-pill-star">★</span>':''}${escapeHtml(t.system)} - ${escapeHtml(t.structure)}`;
+      // Pill width: try to show label text, min 8px
+      const pillW=Math.max(8, Math.min(PX_PER_HOUR*3, 160));
+      const tip=`${t.time} UTC - ${t.system} - ${t.name||'--'} - ${t.structure} - ${t.state} - ${t.status==='Friendly'?'Ours':'Theirs'} - ${elp?'ELAPSED':countdown(ms)}`;
+
+      // Gridlines
+      let gridlines='';
+      for(let h=0;h<HOURS;h++){
+        const gx=h*PX_PER_HOUR;
+        gridlines+=`<div class="tl-gridline${h%6===0?' major-hour':''}" style="left:${gx}px"></div>`;
+      }
+
+      html+=`<div class="${rowCls}" style="height:24px;">
+        ${gridlines}
+        <div class="${pillCls}" style="left:${pillLeft}px;width:${pillW}px;" title="${escapeAttr(tip)}" data-dt="${escapeAttr(dt.toISOString())}">
+          <span class="tl-pill-text">${pillLabel}</span>
+        </div>
+      </div>`;
+    });
+    html+='</div>'; // tl-rows
+
+    html+='</div></div>'; // tl-inner, tl-scroll
+    html+='</div>'; // tl-section
+  });
+
+  html+='</div>'; // view-gantt
+  return html;
+}
+
+/* ════════════════════════════════
+   COMPACT VIEW
+   3-col grid, one line per timer, max density
+════════════════════════════════ */
+
+function renderCompact(list,groups,dates,todayStr){
+  // Compact: per-day chronological, left→right grid that wraps; single-line rows (truncate)
+  const sortedDates = Object.keys(groups).sort();
+
+  function buildDay(date){
+    const timers = [...groups[date]].sort((a,b)=>a.time.localeCompare(b.time));
+    const isToday = date===todayStr;
+    const label = fmtDateShort(date).toUpperCase();
+    const count = timers.length;
+
+    let rows = timers.map(t=>{
+      const tod = todClass(t.time.split(':')[0]);
+      const maj = isVisualMajorTimer(t);
+      const sk  = stateKey(t.state);
+      const hostile = t.status==='Hostile';
+      const dt = timerDT(t.date,t.time);
+      const ms = dt.getTime()-Date.now();
+      const elp = ms<=0;
+
+      const rc = [
+        tod,
+        maj ? 'major' : '',
+        hostile ? 'hostile' : '',
+        elp ? 'elapsed' : ''
+      ].filter(Boolean).join(' ');
+
+      const cdText = elp ? 'elapsed' : countdown(ms);
+      const cdc = cdClass(ms);
+
+      const tip = `${t.date} ${t.time} UTC
+${t.system} · ${t.name}
+${t.structure} · ${t.state}
+${t.status}
+⏱ ${cdText}`;
+      return `<div class="compact-row ${rc}" title="${escapeAttr(tip)}">
+        <span class="compact-star">${maj?'★':''}</span>
+        <span class="compact-time">${escapeHtml(t.time)}</span>
+        <span class="compact-system">${escapeHtml(t.system)}</span>
+        <span class="compact-struct">${escapeHtml(t.structure)}</span>
+        <span class="compact-state ${sk}">${escapeHtml(t.state)}</span>
+        <span class="compact-owner ${hostile?'theirs':'ours'}" aria-label="${escapeAttr(t.status)}"></span>
+        <span class="compact-cd countdown ${cdc}" data-dt="${escapeAttr(dt.toISOString())}">${cdText}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="compact-day" data-date="${date}">
+      <div class="compact-section-header${isToday?' today':''}" data-collapse="${date}">
+        <span class="dsh-caret">▶</span>
+        <span class="dsh-title">${isToday?'TODAY · ':''}${label}</span>
+        <span class="dsh-count">${count} timers</span>
+      </div>
+      <div class="compact-grid" data-daygrid="${date}">
+        ${rows}
+      </div>
+    </div>`;
+  }
+
+  const daysHtml = sortedDates.map(buildDay).join('');
+  return `<div class="view-compact active-view">${daysHtml}</div>`;
+}
+
+const SUMMARY_CORE_STRUCTURES = ["Keepstar","Sotiyo","Fortizar","IHub","TCU","Skyhook","Orbital Skyhook"];
+function summaryBlockStart(time){
+  const h = parseInt(String(time || '00:00').split(':')[0], 10);
+  return Math.floor((Number.isFinite(h) ? h : 0) / 3) * 3;
+}
+function summaryBlockLabel(startHour){
+  const endHour = startHour + 3;
+  return `${String(startHour).padStart(2,'0')}:00-${String(endHour).padStart(2,'0')}:00`;
+}
+function summaryPlural(count, singular, plural){
+  return `${count} ${count===1 ? singular : (plural || singular + 's')}`;
+}
+function timerSummaryKey(t){
+  return `${t.date}|${summaryBlockStart(t.time)}|${t.region || 'Unknown'}`;
+}
+function isSummaryCoreTimer(t){
+  return SUMMARY_CORE_STRUCTURES.includes(t.structure);
+}
+function buildSummaryRows(list){
+  const now = Date.now();
+  const upcoming = list.filter(t => timerDT(t.date,t.time).getTime() > now);
+  const clusters = {};
+  upcoming.forEach(t => {
+    const key = timerSummaryKey(t);
+    if(!clusters[key]) clusters[key] = [];
+    clusters[key].push(t);
+  });
+
+  return upcoming
+    .filter(t => isSummaryCoreTimer(t) || (clusters[timerSummaryKey(t)] || []).length >= 2)
+    .reduce((rows, t) => {
+      const blockStart = summaryBlockStart(t.time);
+      const region = t.region || 'Unknown';
+      const key = `${t.date}|${blockStart}|${region}`;
+      if(!rows[key]){
+        rows[key] = {date:t.date, blockStart, region, timers:[]};
+      }
+      rows[key].timers.push(t);
+      return rows;
+    }, {});
+}
+function countBy(list, prop){
+  return list.reduce((acc, t) => {
+    const key = t[prop] || 'Unknown';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+}
+function renderSummaryStructureList(timers){
+  const counts = countBy(timers, 'structure');
+  return Object.entries(counts)
+    .sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([name,count]) => `${count} ${name}`)
+    .join(', ');
+}
+function renderSummaryStateList(timers){
+  const counts = countBy(timers, 'state');
+  return Object.entries(counts)
+    .sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([name,count]) => `${count} ${name}`)
+    .join(', ');
+}
+function renderSummaryStructureChips(timers){
+  const counts = countBy(timers, 'structure');
+  return Object.entries(counts)
+    .sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([name,count]) => `<span class="summary-struct-chip ${isVisualMajorStructure(name)?'major':''}">${count} ${escapeHtml(name)}</span>`)
+    .join('');
+}
+function renderSummaryRow(row){
+  const timers = [...row.timers].sort((a,b) => timerDT(a.date,a.time) - timerDT(b.date,b.time));
+  const first = timers[0];
+  const hostile = timers.filter(t => t.status === 'Hostile').length;
+  const friendly = timers.filter(t => t.status === 'Friendly').length;
+  const systems = Array.from(new Set(timers.map(t => t.system))).slice(0,8).join(', ');
+  const extraSystems = Math.max(0, new Set(timers.map(t => t.system)).size - 8);
+  const ms = timerDT(first.date,first.time).getTime() - Date.now();
+  const structures = renderSummaryStructureList(timers);
+  const structureChips = renderSummaryStructureChips(timers);
+  const states = renderSummaryStateList(timers);
+  const systemText = systems + (extraSystems ? `, +${extraSystems} more` : '');
+  const sideClass = hostile && friendly ? 'mixed' : hostile ? 'hostile' : 'friendly';
+  const hasMajor = timers.some(isVisualMajorTimer);
+  const urgent = ms < 2*3600*1000;
+  const soon = ms < 6*3600*1000;
+  const blockClass = ['summary-block', sideClass, hasMajor ? 'major' : '', urgent ? 'urgent' : ''].filter(Boolean).join(' ');
+
+  return `<div class="${blockClass}">
+    <div class="summary-block-head">
+      <div class="summary-window-wrap">
+        <div class="summary-window">${escapeHtml(summaryBlockLabel(row.blockStart))}</div>
+        <div class="summary-kicker">${soon ? 'soonest pressure' : 'time block'}</div>
+      </div>
+      <div>
+        <div class="summary-region">${escapeHtml(row.region)}</div>
+        <div class="summary-region-meta">
+          <span class="summary-priority ${sideClass}">${sideClass}</span>
+          ${hasMajor ? '<span class="summary-priority major">major</span>' : ''}
+          ${urgent ? '<span class="summary-priority urgent">0-2h</span>' : ''}
+        </div>
+      </div>
+      <div class="summary-counts">
+        <span class="summary-count">${summaryPlural(timers.length,'timer')}</span>
+        <span class="summary-count hostile">${hostile}H</span>
+        <span class="summary-count friendly">${friendly}F</span>
+      </div>
+    </div>
+    <div class="summary-body">
+      <div class="summary-lead">${escapeHtml(structures)} in ${escapeHtml(row.region)}.</div>
+      <div class="summary-structure-chips">${structureChips}</div>
+      <div class="summary-detail">
+        <span>Systems: <span class="summary-systems">${escapeHtml(systemText || '--')}</span></span>
+        <span>States: ${escapeHtml(states || '--')}</span>
+        <span>First: <span class="summary-eta countdown ${cdClass(ms)}" data-dt="${escapeAttr(timerDT(first.date,first.time).toISOString())}">${countdown(ms)}</span></span>
+      </div>
+    </div>
+  </div>`;
+}
+function renderSummary(list,groups,dates,todayStr){
+  const rowsByKey = buildSummaryRows(list);
+  const rows = Object.values(rowsByKey).sort((a,b) => {
+    const ah = a.timers.filter(t => t.status === 'Hostile').length;
+    const bh = b.timers.filter(t => t.status === 'Hostile').length;
+    return a.date.localeCompare(b.date) ||
+      a.blockStart - b.blockStart ||
+      bh - ah ||
+      b.timers.length - a.timers.length ||
+      a.region.localeCompare(b.region);
+  });
+  const uniqueRegions = new Set(rows.map(r => r.region)).size;
+  const keyTimers = rows.reduce((sum, r) => sum + r.timers.length, 0);
+  const summaryDates = Array.from(new Set(rows.map(r => r.date))).sort();
+
+  let html = `<div class="view-summary active-view">
+    <div class="summary-head">
+      <div>
+        <div class="summary-title">Command summary</div>
+        <div class="summary-subtitle">Upcoming key timers by 3-hour UTC block, region, structure, side, and state.</div>
+      </div>
+      <div class="summary-meta">
+        <span class="summary-chip">${summaryPlural(keyTimers,'key timer')}</span>
+        <span class="summary-chip">${summaryPlural(rows.length,'time block')}</span>
+        <span class="summary-chip">${summaryPlural(uniqueRegions,'region')}</span>
+      </div>
+    </div>`;
+
+  if(!rows.length){
+    return html + `<div class="summary-empty">No upcoming key timers match the current filters.</div></div>`;
+  }
+
+  summaryDates.forEach(date => {
+    const dayRows = rows.filter(r => r.date === date);
+    html += `<div class="summary-day">
+      <div class="summary-day-head${date===todayStr?' today':''}">
+        <span>${date===todayStr?'Today - ':''}${escapeHtml(fmtDate(date))}</span>
+        <span class="summary-day-line"></span>
+        <span>${summaryPlural(dayRows.reduce((sum,r)=>sum+r.timers.length,0),'timer')}</span>
+      </div>
+      ${dayRows.map(renderSummaryRow).join('')}
+    </div>`;
+  });
+
+  return html + '</div>';
+}
+
+
+const REGION_POSITIONS = {
+  'Pure Blind':[240,170],
+  'Deklein':[360,135],
+  'Branch':[520,110],
+  'Tenal':[575,175],
+  'Venal':[470,210],
+  'Tribute':[425,270],
+  'Vale of the Silent':[545,265],
+  'Geminate':[660,315],
+  'Fade':[300,250],
+  'Cloud Ring':[160,305],
+  'Fountain':[120,430],
+  'Delve':[185,550],
+  'Querious':[140,605],
+  'Period Basis':[120,665],
+  'Catch':[350,625],
+  'Providence':[470,615],
+  'Domain':[565,585],
+  'Tash-Murkon':[505,650],
+  'Kor-Azor':[620,625],
+  'Aridia':[430,720],
+  'The Forge':[780,495],
+  'Lonetrek':[770,430],
+  'The Citadel':[840,470],
+  'Black Rise':[860,385],
+  'Placid':[905,415],
+  'Essence':[920,500],
+  'Sinq Laison':[860,565],
+  'Verge Vendor':[810,610],
+  'Metropolis':[700,520],
+  'Heimatar':[630,525],
+  'Molden Heath':[590,470],
+  'Devoid':[625,685],
+  'Khanid':[520,585],
+  'Derelik':[620,770],
+  'Perrigen Falls':[700,185],
+  'Cobalt Edge':[805,175],
+  'Outer Passage':[870,220],
+  'Malpais':[760,265],
+  'Oasa':[675,210],
+  'The Kalevala Expanse':[620,125],
+  'Insmother':[640,360],
+  'Scalding Pass':[535,415],
+  'Wicked Creek':[595,470],
+  'Detorid':[470,470],
+  'Immensea':[430,420],
+  'Omist':[520,530],
+  'Esoteria':[410,545],
+  'Paragon Soul':[320,530],
+  'Feythabolis':[380,490],
+  'Impass':[505,565],
+  'Etherium Reach':[745,335],
+  'Unknown':[500,350]
+};
+
+/* ════════════════════════════════
+   MAP VIEW
+════════════════════════════════ */
+const GEMINATE_REGION_POSITIONS = {
+    // GEMINATE - generated from CCP EVE SDE position2D data
+    '04-LQM': [528, 322],
+    '0-GZX9': [57, 93],
+    '2E-ZR5': [242, 93],
+    '2H-TSE': [57, 164],
+    '39-DGG': [394, 93],
+    '3SFU-S': [461, 534],
+    '3USX-F': [495, 93],
+    '4-CUM5': [360, 252],
+    '4D9-66': [613, 181],
+    '4K0N-J': [225, 499],
+    '4NGK-F': [91, 199],
+    '4VY-Y1': [495, 287],
+    '54-MF6': [175, 464],
+    '5F-YRA': [394, 481],
+    '6L78-1': [444, 322],
+    '6RQ9-A': [444, 93],
+    '6YC-TU': [427, 375],
+    '8-KZXQ': [495, 499],
+    '8MG-J6': [276, 358],
+    '9-KWXC': [545, 93],
+    '9P4O-F': [680, 252],
+    'AD-5B8': [124, 393],
+    'AP9-LV': [91, 128],
+    'Atioth': [596, 516],
+    'B6-52M': [74, 305],
+    'BE-UUN': [276, 516],
+    'B-F1MI': [309, 464],
+    'BND-16': [293, 252],
+    'BWF-ZZ': [326, 358],
+    'CFYY-J': [545, 587],
+    'D0-F4W': [225, 287],
+    'D-I9HJ': [545, 481],
+    'E-91FV': [124, 516],
+    'EOA-ZC': [40, 428],
+    'FDZ4-A': [175, 199],
+    'G-73MR': [124, 464],
+    'HJO-84': [579, 146],
+    'HKYW-T': [545, 640],
+    'IOO-7O': [293, 305],
+    'JE1-36': [444, 428],
+    'K25-XD': [562, 358],
+    'K42-IE': [444, 146],
+    'KR-V6G': [91, 58],
+    'L4X-FH': [107, 340],
+    'L-HV5C': [158, 287],
+    'LR-2XT': [276, 428],
+    'L-TOFR': [646, 146],
+    'LU-HQS': [562, 287],
+    'LX-ZOJ': [528, 252],
+    'M-MD31': [141, 234],
+    'MR4-MY': [192, 146],
+    'NBPH-N': [158, 340],
+    'N-HK93': [495, 622],
+    'NQ-9IH': [124, 93],
+    'O1-FTD': [293, 93],
+    'O2O-2X': [394, 428],
+    'OEY-OR': [343, 93],
+    'O-VWPB': [461, 252],
+    'P-6I0B': [545, 534],
+    'P-E9GN': [613, 111],
+    'PYY3-5': [596, 464],
+    'QKTR-L': [40, 216],
+    'QP0K-B': [74, 516],
+    'Q-TBHW': [680, 199],
+    'RFGW-V': [461, 587],
+    'RLSI-V': [360, 305],
+    'Roua': [225, 216],
+    'SR-KBB': [192, 93],
+    'SV-K8J': [394, 40],
+    'TDE4-H': [394, 534],
+    'TJM-JJ': [74, 464],
+    'TZL-WT': [225, 446],
+    'U6D-9A': [596, 569],
+    'UBX-CC': [74, 393],
+    'UER-TH': [394, 587],
+    'UG-UWZ': [394, 640],
+    'U-L4KS': [495, 411],
+    'VJ-NQP': [596, 622],
+    'V-MZW0': [107, 269],
+    'VSJ-PP': [495, 164],
+    'W-3BSU': [343, 516],
+    'WH-2EZ': [192, 252],
+    'Y8R-XZ': [495, 358],
+    'YN3-E3': [225, 340],
+
+};
+
+const GEMINATE_REGION_SYSTEMS = {
+    'Geminate': ['04-LQM','0-GZX9','2E-ZR5','2H-TSE','39-DGG','3SFU-S','3USX-F','4-CUM5','4D9-66','4K0N-J','4NGK-F','4VY-Y1','54-MF6','5F-YRA','6L78-1','6RQ9-A','6YC-TU','8-KZXQ','8MG-J6','9-KWXC','9P4O-F','AD-5B8','AP9-LV','Atioth','B6-52M','BE-UUN','B-F1MI','BND-16','BWF-ZZ','CFYY-J','D0-F4W','D-I9HJ','E-91FV','EOA-ZC','FDZ4-A','G-73MR','HJO-84','HKYW-T','IOO-7O','JE1-36','K25-XD','K42-IE','KR-V6G','L4X-FH','L-HV5C','LR-2XT','L-TOFR','LU-HQS','LX-ZOJ','M-MD31','MR4-MY','NBPH-N','N-HK93','NQ-9IH','O1-FTD','O2O-2X','OEY-OR','O-VWPB','P-6I0B','P-E9GN','PYY3-5','QKTR-L','QP0K-B','Q-TBHW','RFGW-V','RLSI-V','Roua','SR-KBB','SV-K8J','TDE4-H','TJM-JJ','TZL-WT','U6D-9A','UBX-CC','UER-TH','UG-UWZ','U-L4KS','VJ-NQP','V-MZW0','VSJ-PP','W-3BSU','WH-2EZ','Y8R-XZ','YN3-E3'],
+};
+
+const GEMINATE_REGION_EDGES = {
+    'Geminate': [
+      ['04-LQM','6L78-1'],
+      ['04-LQM','LX-ZOJ'],
+      ['04-LQM','Y8R-XZ'],
+      ['0-GZX9','2H-TSE'],
+      ['0-GZX9','AP9-LV'],
+      ['0-GZX9','KR-V6G'],
+      ['2E-ZR5','O1-FTD'],
+      ['2E-ZR5','SR-KBB'],
+      ['39-DGG','6RQ9-A'],
+      ['39-DGG','OEY-OR'],
+      ['39-DGG','SV-K8J'],
+      ['3SFU-S','8-KZXQ'],
+      ['3SFU-S','RFGW-V'],
+      ['3USX-F','6RQ9-A'],
+      ['3USX-F','9-KWXC'],
+      ['3USX-F','K42-IE'],
+      ['3USX-F','VSJ-PP'],
+      ['4-CUM5','BND-16'],
+      ['4-CUM5','RLSI-V'],
+      ['4D9-66','HJO-84'],
+      ['4D9-66','L-TOFR'],
+      ['4K0N-J','TZL-WT'],
+      ['4NGK-F','AP9-LV'],
+      ['4VY-Y1','6L78-1'],
+      ['4VY-Y1','LU-HQS'],
+      ['4VY-Y1','LX-ZOJ'],
+      ['4VY-Y1','O-VWPB'],
+      ['54-MF6','AD-5B8'],
+      ['54-MF6','E-91FV'],
+      ['54-MF6','G-73MR'],
+      ['5F-YRA','O2O-2X'],
+      ['5F-YRA','TDE4-H'],
+      ['6L78-1','6YC-TU'],
+      ['6L78-1','O-VWPB'],
+      ['6L78-1','U-L4KS'],
+      ['6RQ9-A','K42-IE'],
+      ['6YC-TU','O2O-2X'],
+      ['6YC-TU','U-L4KS'],
+      ['8-KZXQ','D-I9HJ'],
+      ['8MG-J6','BWF-ZZ'],
+      ['9-KWXC','P-E9GN'],
+      ['9P4O-F','Q-TBHW'],
+      ['AD-5B8','G-73MR'],
+      ['AD-5B8','UBX-CC'],
+      ['AP9-LV','NQ-9IH'],
+      ['Atioth','D-I9HJ'],
+      ['Atioth','U6D-9A'],
+      ['B6-52M','L4X-FH'],
+      ['B6-52M','V-MZW0'],
+      ['BE-UUN','B-F1MI'],
+      ['BE-UUN','W-3BSU'],
+      ['B-F1MI','LR-2XT'],
+      ['B-F1MI','W-3BSU'],
+      ['BND-16','IOO-7O'],
+      ['BND-16','O1-FTD'],
+      ['BWF-ZZ','IOO-7O'],
+      ['BWF-ZZ','RLSI-V'],
+      ['CFYY-J','HKYW-T'],
+      ['CFYY-J','P-6I0B'],
+      ['D0-F4W','L-HV5C'],
+      ['D0-F4W','NBPH-N'],
+      ['D0-F4W','WH-2EZ'],
+      ['D0-F4W','YN3-E3'],
+      ['D-I9HJ','P-6I0B'],
+      ['D-I9HJ','PYY3-5'],
+      ['D-I9HJ','U-L4KS'],
+      ['E-91FV','G-73MR'],
+      ['E-91FV','QP0K-B'],
+      ['EOA-ZC','TJM-JJ'],
+      ['EOA-ZC','UBX-CC'],
+      ['FDZ4-A','M-MD31'],
+      ['FDZ4-A','MR4-MY'],
+      ['FDZ4-A','Roua'],
+      ['G-73MR','TJM-JJ'],
+      ['HJO-84','P-E9GN'],
+      ['HKYW-T','N-HK93'],
+      ['HKYW-T','VJ-NQP'],
+      ['JE1-36','O2O-2X'],
+      ['K25-XD','LU-HQS'],
+      ['K25-XD','U-L4KS'],
+      ['K42-IE','VSJ-PP'],
+      ['KR-V6G','NQ-9IH'],
+      ['L4X-FH','NBPH-N'],
+      ['L-HV5C','NBPH-N'],
+      ['L-HV5C','WH-2EZ'],
+      ['L-HV5C','YN3-E3'],
+      ['LR-2XT','TZL-WT'],
+      ['LR-2XT','YN3-E3'],
+      ['L-TOFR','P-E9GN'],
+      ['L-TOFR','Q-TBHW'],
+      ['LU-HQS','LX-ZOJ'],
+      ['LX-ZOJ','O-VWPB'],
+      ['M-MD31','QKTR-L'],
+      ['M-MD31','V-MZW0'],
+      ['M-MD31','WH-2EZ'],
+      ['MR4-MY','SR-KBB'],
+      ['NBPH-N','UBX-CC'],
+      ['NBPH-N','YN3-E3'],
+      ['N-HK93','RFGW-V'],
+      ['NQ-9IH','SR-KBB'],
+      ['O1-FTD','OEY-OR'],
+      ['O-VWPB','VSJ-PP'],
+      ['QP0K-B','TJM-JJ'],
+      ['TDE4-H','UER-TH'],
+      ['TJM-JJ','UBX-CC'],
+      ['U6D-9A','VJ-NQP'],
+      ['UER-TH','UG-UWZ'],
+    ],
+};
+const NORTHERN_REGION_POSITIONS = {
+    // DEKLEIN - generated from EVE SDE position2D data
+    '0P-F3K': [549, 427],
+    '0V0R-R': [155, 485],
+    '2-KF56': [631, 466],
+    '2O9G-D': [582, 350],
+    '2R-CRW': [680, 466],
+    '33RB-O': [647, 195],
+    '3JN9-Q': [89, 640],
+    '3OAT-Q': [680, 156],
+    '3QE-9Q': [417, 350],
+    '3T7-M8': [237, 350],
+    '43B-O1': [335, 234],
+    '4N-BUI': [286, 234],
+    '4U90-Z': [417, 582],
+    '5S-KXA': [335, 175],
+    '5W3-DG': [253, 505],
+    '7T6P-C': [303, 543],
+    '85-B52': [385, 253],
+    '8S28-3': [270, 640],
+    '94-H3F': [467, 485],
+    '9CK-KZ': [286, 137],
+    'A4L-A2': [89, 234],
+    'AD-CBT': [450, 543],
+    'AGG-NR': [138, 543],
+    'C7Y-7Z': [680, 292],
+    'CCP-US': [680, 524],
+    'CU9-T0': [499, 524],
+    'CZDJ-1': [89, 175],
+    'DKUK-G': [680, 40],
+    'E3UY-6': [188, 582],
+    'E-FIC0': [385, 311],
+    'FMB-JP': [532, 485],
+    'FO8M-2': [385, 543],
+    'GY5-26': [188, 137],
+    'I30-3A': [631, 369],
+    'II-5O9': [680, 350],
+    'J1AU-9': [138, 350],
+    'JU-OWQ': [532, 350],
+    'K5F-Z2': [598, 408],
+    'LEK-N5': [188, 524],
+    'LT-DRO': [253, 563],
+    'MXX5-9': [483, 350],
+    'MZ1E-P': [188, 350],
+    'N2IS-B': [188, 292],
+    'NC-N3F': [614, 311],
+    'N-TFXK': [680, 98],
+    'O-2RNZ': [106, 582],
+    'OWXT-5': [188, 446],
+    'QPO-WI': [417, 485],
+    'R8S-1K': [352, 582],
+    'RG9-7U': [56, 137],
+    'RO0-AF': [270, 446],
+    'S-DN5M': [532, 292],
+    'T-945F': [385, 621],
+    'TXME-A': [582, 505],
+    'UEJX-G': [40, 234],
+    'UJY-HE': [89, 98],
+    'U-TJ7Y': [89, 292],
+    'VFK-IV': [680, 408],
+    'VPLL-N': [188, 234],
+    'WUZ-WM': [286, 292],
+    'X3-PBC': [89, 350],
+    'XCBK-X': [237, 98],
+    'XCF-8N': [499, 446],
+    'X-Z4DA': [680, 234],
+    'YA0-XJ': [631, 524],
+    'YZ-UKA': [335, 292],
+    'ZOYW-O': [303, 388],
+    'ZZZR-5': [483, 292],
+
+    // PURE BLIND - generated from EVE SDE position2D data
+    '12YA-2': [653, 287],
+    '2-6TGQ': [449, 181],
+    '2D-0SO': [476, 146],
+    '3V8-LJ': [421, 340],
+    '4-ABS8': [353, 216],
+    '5-9WNU': [639, 234],
+    '5ZXX-K': [476, 234],
+    '6GWE-A': [340, 587],
+    '7D-0SQ': [40, 569],
+    '7RM-N0': [244, 340],
+    '7X-VKB': [122, 305],
+    '8S-0E1': [517, 199],
+    '93PI-4': [503, 605],
+    'A8I-C5': [626, 111],
+    'B8EN-S': [380, 340],
+    'B-9C24': [149, 340],
+    'BDV3-T': [666, 340],
+    'C-H9X7': [680, 128],
+    'CL6-ZG': [299, 393],
+    'CR-AQH': [653, 499],
+    'CXN1-Z': [340, 393],
+    'D2-HOS': [190, 587],
+    'D7T-C0': [544, 164],
+    'DK-FXK': [612, 58],
+    'DP-1YE': [380, 181],
+    'DT-TCD': [135, 640],
+    'EC-P8R': [449, 587],
+    'EL8-4Q': [612, 199],
+    'EWOK-K': [449, 534],
+    'E-Z2ZX': [40, 340],
+    'F-NMX6': [203, 340],
+    'FWA-4V': [203, 446],
+    'G95-VZ': [299, 287],
+    'GA-P6C': [217, 287],
+    'G-M4I8': [489, 552],
+    'H1-J33': [67, 481],
+    'HPS5-C': [190, 640],
+    'ION-FG': [680, 181],
+    'J-CIJV': [340, 287],
+    'JC-YX8': [585, 234],
+    'JE-D5U': [462, 305],
+    'J-OK0C': [340, 640],
+    'KDV-DE': [312, 552],
+    'KI-TL0': [585, 164],
+    'KLY-C0': [299, 340],
+    'KQK1-2': [367, 111],
+    'KU5R-W': [67, 428],
+    'L-TS8S': [421, 446],
+    'M-76XI': [680, 75],
+    'MI6O-6': [394, 481],
+    'MQ-NPY': [217, 552],
+    'MT9Q-S': [285, 587],
+    'M-YCD4': [585, 446],
+    'N-H32Y': [639, 164],
+    'O-A6YN': [122, 375],
+    'O-BY0Y': [435, 111],
+    'OE-9UF': [517, 305],
+    'OGV-AS': [94, 569],
+    'O-N8XZ': [449, 481],
+    'P-2TTL': [94, 340],
+    'PFU-LH': [489, 340],
+    'Q-5211': [612, 481],
+    'R-2R0G': [557, 534],
+    'R6XN-9': [421, 393],
+    'RD-G2R': [299, 446],
+    'R-LW2I': [380, 287],
+    'ROIR-Y': [299, 234],
+    'RORZ-H': [67, 375],
+    'RQH-MY': [244, 587],
+    'RZC-16': [203, 499],
+    'S-MDYI': [244, 393],
+    'TFA0-U': [163, 552],
+    'UC3H-Y': [312, 499],
+    'UI-8ZE': [94, 622],
+    'U-INPD': [557, 58],
+    'UR-E6D': [408, 146],
+    'WW-KGD': [653, 393],
+    'X47L-Q': [340, 164],
+    'X-7OMU': [340, 340],
+    'XI-VUF': [585, 111],
+    'XQ-PXU': [639, 446],
+    'Y2-6EA': [135, 587],
+    'Y-C3EQ': [67, 534],
+    'ZJET-E': [653, 40],
+    'ZKYV-W': [203, 393],
+
+    // BRANCH - generated from EVE SDE position2D data
+    '0P9Z-I': [323, 255],
+    '1G-MJE': [233, 578],
+    '1IX-C0': [85, 594],
+    '2B7A-3': [70, 517],
+    '313I-B': [85, 117],
+    '3F-JZF': [129, 517],
+    '3KNA-N': [412, 517],
+    '3-N3OO': [591, 271],
+    '3-TD6L': [635, 378],
+    '4-48K1': [412, 163],
+    '4-BE0M': [591, 163],
+    '4DTQ-K': [144, 178],
+    '5-0WB9': [174, 517],
+    '52G-NZ': [144, 317],
+    '5LJ-MD': [144, 271],
+    '5-P1Y2': [457, 471],
+    '6-O5GY': [100, 317],
+    '8-4GQM': [323, 394],
+    '9-B1DS': [367, 563],
+    '9F-7PZ': [233, 486],
+    'A-G1FM': [531, 209],
+    'AH-B84': [382, 117],
+    'B8O-KJ': [144, 225],
+    'B-GC1T': [263, 86],
+    'BKG-Q2': [397, 378],
+    'BU-IU4': [472, 563],
+    'BWI1-9': [591, 471],
+    'C-4ZOS': [129, 440],
+    'CH9L-K': [367, 609],
+    'C-HCGU': [412, 255],
+    'C-LBQS': [546, 471],
+    'C-LP3N': [233, 532],
+    'CS-ZGD': [531, 271],
+    'C-VGYO': [70, 394],
+    'CX-1XF': [591, 378],
+    'D4R-H7': [144, 117],
+    'DCI7-7': [487, 40],
+    'EQI2-2': [174, 148],
+    'EWN-2U': [442, 132],
+    'F-9F6Q': [308, 148],
+    'HB7R-F': [353, 86],
+    'I-7JR4': [412, 609],
+    'I-7RIS': [487, 209],
+    'J52-BH': [501, 471],
+    'J7YR-1': [442, 40],
+    'J9-5MQ': [114, 148],
+    'JRZ-B9': [442, 332],
+    'JTAU-5': [353, 148],
+    'K-8SQS': [70, 440],
+    'KJ-QWL': [367, 471],
+    'KL3O-J': [591, 425],
+    'KMC-WI': [606, 86],
+    'KMQ4-V': [412, 471],
+    'KV-8SN': [204, 317],
+    'LRWD-B': [293, 425],
+    'LXWN-W': [293, 532],
+    'MA-VDX': [293, 625],
+    'ME-4IU': [412, 563],
+    'M-HU4V': [204, 394],
+    'NEH-CS': [129, 394],
+    'NLPB-0': [680, 378],
+    'NTV0-1': [412, 209],
+    'O94U-A': [40, 363],
+    'OJ-A8M': [531, 332],
+    'O-JPKH': [308, 86],
+    'P7Z-R3': [531, 163],
+    'PKG4-7': [442, 86],
+    'PUWL-4': [144, 578],
+    'Q-4DEC': [85, 178],
+    'QCWA-Z': [204, 271],
+    'Q-FEEJ': [367, 255],
+    'Q-NJZ4': [680, 425],
+    'QXQ-BA': [263, 394],
+    'QYZM-W': [457, 609],
+    'R4O-I6': [635, 425],
+    'RO90-H': [293, 578],
+    'S-B7IT': [397, 332],
+    'SVB-RE': [412, 425],
+    'T-Q2DD': [293, 363],
+    'UB-UQZ': [204, 178],
+    'UQ9-3C': [531, 40],
+    'V8W-QS': [487, 332],
+    'VL3I-M': [561, 71],
+    'W-4FA9': [100, 548],
+    'WO-AIJ': [233, 625],
+    'X4UV-Z': [442, 378],
+    'X7R-JW': [233, 363],
+    'XM-4L0': [204, 225],
+    'XW-2XP': [442, 286],
+    'XW-JHT': [100, 363],
+    'Y-1918': [85, 640],
+    'YG-82V': [263, 178],
+    'ZIU-EP': [561, 240],
+    'Z-K495': [263, 225],
+
+    // TENAL - generated from EVE SDE position2D data
+    '0M-103': [545, 295],
+    '0-UVHJ': [427, 622],
+    '1BWK-S': [545, 604],
+    '1QH-0K': [175, 549],
+    '2-3Q2G': [40, 40],
+    '30-D5G': [276, 458],
+    '33CE-7': [326, 258],
+    '3DR-CR': [175, 640],
+    '3-QYVE': [293, 40],
+    '5-O8B1': [377, 458],
+    '6-AOLS': [377, 258],
+    '6OYQ-Z': [478, 295],
+    '7D-PAT': [326, 149],
+    'A-1IJ9': [629, 276],
+    'A1RR-M': [596, 113],
+    'AR-5SY': [663, 131],
+    'C-XNUA': [360, 185],
+    'DCJ-ZT': [512, 440],
+    'EN-GTB': [208, 222],
+    'EOY-BG': [309, 622],
+    'G06-8Y': [377, 349],
+    'GW7P-8': [680, 204],
+    'H1-ESN': [124, 640],
+    'HB-FSO': [242, 513],
+    'HE5T-A': [545, 240],
+    'I1-BE8': [141, 385],
+    'IG-ZAM': [360, 622],
+    'IKTD-P': [427, 367],
+    'J1-KJP': [293, 567],
+    'JI-1UQ': [91, 276],
+    'JSI-LL': [124, 149],
+    'KMV-CQ': [478, 567],
+    'KW-1MV': [427, 458],
+    'L-P3XM': [427, 240],
+    'M-UC0S': [124, 76],
+    'MZPH-W': [158, 240],
+    'NCG-PW': [394, 585],
+    'NV-3KA': [545, 549],
+    'O36A-P': [512, 385],
+    'OE-4HB': [680, 76],
+    'PNS7-J': [208, 585],
+    'P-UCRP': [276, 95],
+    'Q1U-IU': [74, 149],
+    'RKE-CP': [613, 531],
+    'RLTG-3': [225, 640],
+    'R-YWID': [293, 513],
+    'S-1LIO': [680, 531],
+    'S-EVIQ': [259, 604],
+    'SF-XJS': [596, 185],
+    'S-KSWL': [377, 513],
+    'SY0W-2': [158, 113],
+    'SZ6-TA': [326, 385],
+    'T-K10W': [242, 185],
+    'U1TX-A': [478, 622],
+    'U5-XW7': [158, 185],
+    'U-O2DA': [326, 313],
+    'V7-MID': [91, 40],
+    'V-LDEJ': [276, 149],
+    'W0X-MG': [107, 222],
+    'W8O-19': [141, 585],
+    'WV-0R2': [427, 313],
+    'Y-YHZQ': [629, 222],
+    'ZH3-BS': [141, 495],
+    'ZJ-QOO': [141, 440],
+    'ZK-YQ3': [158, 295],
+    'Z-LO6I': [512, 331],
+    'Z-SR1I': [680, 258],
+    'ZXA-V6': [91, 476],
+
+    // FADE - generated from EVE SDE position2D data
+    '0-ARFO': [164, 409],
+    '8QMO-E': [102, 271],
+    '8W-OSE': [226, 502],
+    'C4C-Z4': [226, 178],
+    'C8-CHY': [639, 548],
+    'C-OK0R': [226, 363],
+    'CR-IFM': [597, 317],
+    'DO6H-Q': [680, 178],
+    'DW-T2I': [535, 178],
+    'E9KD-N': [288, 640],
+    'E-9ORY': [639, 409],
+    'FIO1-8': [288, 502],
+    'GME-PQ': [164, 178],
+    'HHK-VL': [680, 317],
+    'I-UUI5': [40, 86],
+    'K4YZ-Y': [308, 40],
+    'L-C3O7': [288, 178],
+    'L-SCBU': [432, 40],
+    'MPPA-A': [102, 132],
+    'O1Y-ED': [370, 40],
+    'O-CNPR': [474, 178],
+    'P-33KR': [597, 178],
+    'VRH-H7': [412, 178],
+    'WQY-IQ': [226, 640],
+    'X36Y-G': [350, 178],
+    'X5-UME': [164, 40],
+    'YKSC-A': [288, 363],
+
+    // VENAL - generated from EVE SDE position2D data
+    '0-BFTQ': [345, 418],
+    '0-O2UT': [505, 170],
+    '0-XIDJ': [69, 405],
+    '1-Y6KI': [229, 523],
+    '2IBE-N': [651, 197],
+    '2PLH-3': [549, 66],
+    '2TH-3F': [69, 210],
+    '3A1P-N': [345, 627],
+    '42XJ-N': [622, 301],
+    '430-BE': [244, 40],
+    '4-7IL9': [476, 40],
+    '4RX-EE': [331, 327],
+    '4S-PVC': [127, 288],
+    '65V-RH': [505, 131],
+    '6NJ8-V': [287, 418],
+    '6UQ-4U': [244, 92],
+    '6W-HRH': [200, 340],
+    '6ZJ-SC': [418, 327],
+    '8CIX-S': [69, 327],
+    '9-266Q': [287, 510],
+    '92D-OI': [84, 92],
+    '92K-H2': [404, 536],
+    '9-8BL8': [200, 223],
+    '9IPC-E': [273, 197],
+    '9-R6GU': [40, 640],
+    'A-AFGR': [447, 588],
+    'AA-YRK': [404, 575],
+    'AJCJ-1': [287, 379],
+    'AZ-UWB': [389, 40],
+    'B3QP-K': [651, 327],
+    'B-CZXG': [549, 118],
+    'BV-1JG': [316, 444],
+    'C2-DDA': [680, 79],
+    'CSOA-B': [200, 379],
+    'D-8SI1': [229, 444],
+    'D-SKWC': [113, 483],
+    'E1F-E5': [127, 249],
+    'E-7U8U': [156, 405],
+    'EIV-1W': [244, 144],
+    'EK2-ET': [171, 40],
+    'FHB-QA': [593, 275],
+    'G9D-XW': [593, 327],
+    'GVZ-1W': [680, 301],
+    'H-AJ27': [98, 183],
+    'HBD-CC': [142, 457],
+    'HD-JVQ': [433, 366],
+    'H-PA29': [258, 549],
+    'H-S5BM': [418, 92],
+    'JURU-T': [447, 144],
+    'K3JR-J': [200, 418],
+    'KK-L97': [127, 575],
+    'LHJ-2G': [273, 66],
+    'L-IE41': [622, 170],
+    'M2-2V1': [127, 210],
+    'MC6-5J': [462, 92],
+    'MQFX-Q': [200, 262],
+    'N0C-UN': [331, 249],
+    'N-5476': [127, 105],
+    'N5Y-4N': [200, 301],
+    'N6G-H3': [345, 588],
+    'N-Q5PW': [171, 575],
+    'OJ-CT4': [360, 66],
+    'O-TVTD': [69, 366],
+    'OZ-VAE': [404, 497],
+    'PF-QHK': [389, 249],
+    'P-FSQE': [215, 562],
+    'P-GKF5': [113, 405],
+    'P-VYVL': [375, 314],
+    'PZOZ-K': [142, 66],
+    'Q61Y-F': [564, 170],
+    'Q-7SUI': [433, 249],
+    'QHJ-FW': [287, 157],
+    'R-KZK7': [40, 601],
+    'RQ9-OZ': [505, 79],
+    'S-1ZXZ': [200, 131],
+    'SBL5-R': [69, 444],
+    'SE-SHZ': [113, 144],
+    'SHJO-J': [316, 66],
+    'SS-GED': [331, 379],
+    'V3X-L8': [331, 288],
+    'VG-6CH': [331, 210],
+    'VG-QW1': [651, 144],
+    'VVD-O6': [447, 301],
+    'W3KK-R': [98, 53],
+    'WLF-D3': [69, 249],
+    'XW-6TC': [404, 288],
+    'Y-4CFK': [244, 405],
+    'Y6-HPG': [98, 601],
+    'YJ3-UT': [651, 105],
+    'YP-J33': [229, 483],
+    'Y-W1Q3': [98, 640],
+    'Z0-TJW': [331, 170],
+    'Z3U-GI': [651, 275],
+    'ZD4-G9': [622, 79],
+    'Z-GY5S': [69, 575],
+
+};
+
+const NORTHERN_REGION_SYSTEMS = {
+    'Deklein': ['0P-F3K','0V0R-R','2-KF56','2O9G-D','2R-CRW','33RB-O','3JN9-Q','3OAT-Q','3QE-9Q','3T7-M8','43B-O1','4N-BUI','4U90-Z','5S-KXA','5W3-DG','7T6P-C','85-B52','8S28-3','94-H3F','9CK-KZ','A4L-A2','AD-CBT','AGG-NR','C7Y-7Z','CCP-US','CU9-T0','CZDJ-1','DKUK-G','E3UY-6','E-FIC0','FMB-JP','FO8M-2','GY5-26','I30-3A','II-5O9','J1AU-9','JU-OWQ','K5F-Z2','LEK-N5','LT-DRO','MXX5-9','MZ1E-P','N2IS-B','NC-N3F','N-TFXK','O-2RNZ','OWXT-5','QPO-WI','R8S-1K','RG9-7U','RO0-AF','S-DN5M','T-945F','TXME-A','UEJX-G','UJY-HE','U-TJ7Y','VFK-IV','VPLL-N','WUZ-WM','X3-PBC','XCBK-X','XCF-8N','X-Z4DA','YA0-XJ','YZ-UKA','ZOYW-O','ZZZR-5'],
+    'Pure Blind': ['12YA-2','2-6TGQ','2D-0SO','3V8-LJ','4-ABS8','5-9WNU','5ZXX-K','6GWE-A','7D-0SQ','7RM-N0','7X-VKB','8S-0E1','93PI-4','A8I-C5','B8EN-S','B-9C24','BDV3-T','C-H9X7','CL6-ZG','CR-AQH','CXN1-Z','D2-HOS','D7T-C0','DK-FXK','DP-1YE','DT-TCD','EC-P8R','EL8-4Q','EWOK-K','E-Z2ZX','F-NMX6','FWA-4V','G95-VZ','GA-P6C','G-M4I8','H1-J33','HPS5-C','ION-FG','J-CIJV','JC-YX8','JE-D5U','J-OK0C','KDV-DE','KI-TL0','KLY-C0','KQK1-2','KU5R-W','L-TS8S','M-76XI','MI6O-6','MQ-NPY','MT9Q-S','M-YCD4','N-H32Y','O-A6YN','O-BY0Y','OE-9UF','OGV-AS','O-N8XZ','P-2TTL','PFU-LH','Q-5211','R-2R0G','R6XN-9','RD-G2R','R-LW2I','ROIR-Y','RORZ-H','RQH-MY','RZC-16','S-MDYI','TFA0-U','UC3H-Y','UI-8ZE','U-INPD','UR-E6D','WW-KGD','X47L-Q','X-7OMU','XI-VUF','XQ-PXU','Y2-6EA','Y-C3EQ','ZJET-E','ZKYV-W'],
+    'Branch': ['0P9Z-I','1G-MJE','1IX-C0','2B7A-3','313I-B','3F-JZF','3KNA-N','3-N3OO','3-TD6L','4-48K1','4-BE0M','4DTQ-K','5-0WB9','52G-NZ','5LJ-MD','5-P1Y2','6-O5GY','8-4GQM','9-B1DS','9F-7PZ','A-G1FM','AH-B84','B8O-KJ','B-GC1T','BKG-Q2','BU-IU4','BWI1-9','C-4ZOS','CH9L-K','C-HCGU','C-LBQS','C-LP3N','CS-ZGD','C-VGYO','CX-1XF','D4R-H7','DCI7-7','EQI2-2','EWN-2U','F-9F6Q','HB7R-F','I-7JR4','I-7RIS','J52-BH','J7YR-1','J9-5MQ','JRZ-B9','JTAU-5','K-8SQS','KJ-QWL','KL3O-J','KMC-WI','KMQ4-V','KV-8SN','LRWD-B','LXWN-W','MA-VDX','ME-4IU','M-HU4V','NEH-CS','NLPB-0','NTV0-1','O94U-A','OJ-A8M','O-JPKH','P7Z-R3','PKG4-7','PUWL-4','Q-4DEC','QCWA-Z','Q-FEEJ','Q-NJZ4','QXQ-BA','QYZM-W','R4O-I6','RO90-H','S-B7IT','SVB-RE','T-Q2DD','UB-UQZ','UQ9-3C','V8W-QS','VL3I-M','W-4FA9','WO-AIJ','X4UV-Z','X7R-JW','XM-4L0','XW-2XP','XW-JHT','Y-1918','YG-82V','ZIU-EP','Z-K495'],
+    'Tenal': ['0M-103','0-UVHJ','1BWK-S','1QH-0K','2-3Q2G','30-D5G','33CE-7','3DR-CR','3-QYVE','5-O8B1','6-AOLS','6OYQ-Z','7D-PAT','A-1IJ9','A1RR-M','AR-5SY','C-XNUA','DCJ-ZT','EN-GTB','EOY-BG','G06-8Y','GW7P-8','H1-ESN','HB-FSO','HE5T-A','I1-BE8','IG-ZAM','IKTD-P','J1-KJP','JI-1UQ','JSI-LL','KMV-CQ','KW-1MV','L-P3XM','M-UC0S','MZPH-W','NCG-PW','NV-3KA','O36A-P','OE-4HB','PNS7-J','P-UCRP','Q1U-IU','RKE-CP','RLTG-3','R-YWID','S-1LIO','S-EVIQ','SF-XJS','S-KSWL','SY0W-2','SZ6-TA','T-K10W','U1TX-A','U5-XW7','U-O2DA','V7-MID','V-LDEJ','W0X-MG','W8O-19','WV-0R2','Y-YHZQ','ZH3-BS','ZJ-QOO','ZK-YQ3','Z-LO6I','Z-SR1I','ZXA-V6'],
+    'Fade': ['0-ARFO','8QMO-E','8W-OSE','C4C-Z4','C8-CHY','C-OK0R','CR-IFM','DO6H-Q','DW-T2I','E9KD-N','E-9ORY','FIO1-8','GME-PQ','HHK-VL','I-UUI5','K4YZ-Y','L-C3O7','L-SCBU','MPPA-A','O1Y-ED','O-CNPR','P-33KR','VRH-H7','WQY-IQ','X36Y-G','X5-UME','YKSC-A'],
+    'Venal': ['0-BFTQ','0-O2UT','0-XIDJ','1-Y6KI','2IBE-N','2PLH-3','2TH-3F','3A1P-N','42XJ-N','430-BE','4-7IL9','4RX-EE','4S-PVC','65V-RH','6NJ8-V','6UQ-4U','6W-HRH','6ZJ-SC','8CIX-S','9-266Q','92D-OI','92K-H2','9-8BL8','9IPC-E','9-R6GU','A-AFGR','AA-YRK','AJCJ-1','AZ-UWB','B3QP-K','B-CZXG','BV-1JG','C2-DDA','CSOA-B','D-8SI1','D-SKWC','E1F-E5','E-7U8U','EIV-1W','EK2-ET','FHB-QA','G9D-XW','GVZ-1W','H-AJ27','HBD-CC','HD-JVQ','H-PA29','H-S5BM','JURU-T','K3JR-J','KK-L97','LHJ-2G','L-IE41','M2-2V1','MC6-5J','MQFX-Q','N0C-UN','N-5476','N5Y-4N','N6G-H3','N-Q5PW','OJ-CT4','O-TVTD','OZ-VAE','PF-QHK','P-FSQE','P-GKF5','P-VYVL','PZOZ-K','Q61Y-F','Q-7SUI','QHJ-FW','R-KZK7','RQ9-OZ','S-1ZXZ','SBL5-R','SE-SHZ','SHJO-J','SS-GED','V3X-L8','VG-6CH','VG-QW1','VVD-O6','W3KK-R','WLF-D3','XW-6TC','Y-4CFK','Y6-HPG','YJ3-UT','YP-J33','Y-W1Q3','Z0-TJW','Z3U-GI','ZD4-G9','Z-GY5S'],
+};
+
+const NORTHERN_REGION_EDGES = {
+    'Deklein': [
+      ['0P-F3K','FMB-JP'],
+      ['0P-F3K','K5F-Z2'],
+      ['0V0R-R','LEK-N5'],
+      ['0V0R-R','OWXT-5'],
+      ['2-KF56','2R-CRW'],
+      ['2-KF56','VFK-IV'],
+      ['2-KF56','YA0-XJ'],
+      ['2O9G-D','I30-3A'],
+      ['2O9G-D','JU-OWQ'],
+      ['2O9G-D','NC-N3F'],
+      ['2R-CRW','CCP-US'],
+      ['2R-CRW','VFK-IV'],
+      ['2R-CRW','YA0-XJ'],
+      ['33RB-O','3OAT-Q'],
+      ['33RB-O','X-Z4DA'],
+      ['3JN9-Q','O-2RNZ'],
+      ['3OAT-Q','N-TFXK'],
+      ['3OAT-Q','X-Z4DA'],
+      ['3QE-9Q','E-FIC0'],
+      ['3QE-9Q','MXX5-9'],
+      ['3QE-9Q','ZOYW-O'],
+      ['3T7-M8','MZ1E-P'],
+      ['3T7-M8','N2IS-B'],
+      ['3T7-M8','OWXT-5'],
+      ['3T7-M8','WUZ-WM'],
+      ['43B-O1','5S-KXA'],
+      ['43B-O1','WUZ-WM'],
+      ['4N-BUI','9CK-KZ'],
+      ['4N-BUI','GY5-26'],
+      ['4N-BUI','VPLL-N'],
+      ['4N-BUI','WUZ-WM'],
+      ['4N-BUI','XCBK-X'],
+      ['4U90-Z','AD-CBT'],
+      ['4U90-Z','FO8M-2'],
+      ['4U90-Z','T-945F'],
+      ['5W3-DG','7T6P-C'],
+      ['5W3-DG','LT-DRO'],
+      ['5W3-DG','RO0-AF'],
+      ['85-B52','E-FIC0'],
+      ['85-B52','YZ-UKA'],
+      ['8S28-3','E3UY-6'],
+      ['8S28-3','LT-DRO'],
+      ['94-H3F','CU9-T0'],
+      ['94-H3F','QPO-WI'],
+      ['94-H3F','XCF-8N'],
+      ['9CK-KZ','GY5-26'],
+      ['9CK-KZ','VPLL-N'],
+      ['9CK-KZ','XCBK-X'],
+      ['A4L-A2','CZDJ-1'],
+      ['A4L-A2','UEJX-G'],
+      ['A4L-A2','U-TJ7Y'],
+      ['AGG-NR','LEK-N5'],
+      ['AGG-NR','O-2RNZ'],
+      ['C7Y-7Z','II-5O9'],
+      ['C7Y-7Z','X-Z4DA'],
+      ['CU9-T0','FMB-JP'],
+      ['CU9-T0','XCF-8N'],
+      ['CZDJ-1','RG9-7U'],
+      ['CZDJ-1','UJY-HE'],
+      ['DKUK-G','N-TFXK'],
+      ['E3UY-6','LEK-N5'],
+      ['E-FIC0','YZ-UKA'],
+      ['FMB-JP','TXME-A'],
+      ['FMB-JP','XCF-8N'],
+      ['FO8M-2','QPO-WI'],
+      ['FO8M-2','R8S-1K'],
+      ['FO8M-2','T-945F'],
+      ['GY5-26','VPLL-N'],
+      ['GY5-26','XCBK-X'],
+      ['I30-3A','VFK-IV'],
+      ['II-5O9','VFK-IV'],
+      ['J1AU-9','MZ1E-P'],
+      ['J1AU-9','X3-PBC'],
+      ['JU-OWQ','MXX5-9'],
+      ['JU-OWQ','S-DN5M'],
+      ['LEK-N5','OWXT-5'],
+      ['MXX5-9','ZZZR-5'],
+      ['N2IS-B','VPLL-N'],
+      ['R8S-1K','T-945F'],
+      ['RG9-7U','UJY-HE'],
+      ['RO0-AF','ZOYW-O'],
+      ['TXME-A','YA0-XJ'],
+      ['U-TJ7Y','X3-PBC'],
+      ['VPLL-N','XCBK-X'],
+    ],
+    'Pure Blind': [
+      ['12YA-2','5-9WNU'],
+      ['12YA-2','BDV3-T'],
+      ['2-6TGQ','5ZXX-K'],
+      ['2-6TGQ','DP-1YE'],
+      ['2D-0SO','D7T-C0'],
+      ['2D-0SO','O-BY0Y'],
+      ['2D-0SO','UR-E6D'],
+      ['3V8-LJ','B8EN-S'],
+      ['3V8-LJ','DP-1YE'],
+      ['3V8-LJ','R6XN-9'],
+      ['3V8-LJ','R-LW2I'],
+      ['4-ABS8','DP-1YE'],
+      ['4-ABS8','J-CIJV'],
+      ['4-ABS8','R-LW2I'],
+      ['5-9WNU','EL8-4Q'],
+      ['5ZXX-K','8S-0E1'],
+      ['5ZXX-K','JE-D5U'],
+      ['6GWE-A','J-OK0C'],
+      ['6GWE-A','KDV-DE'],
+      ['6GWE-A','MT9Q-S'],
+      ['6GWE-A','UC3H-Y'],
+      ['7D-0SQ','Y-C3EQ'],
+      ['7RM-N0','F-NMX6'],
+      ['7RM-N0','GA-P6C'],
+      ['7RM-N0','KLY-C0'],
+      ['7RM-N0','S-MDYI'],
+      ['7X-VKB','B-9C24'],
+      ['7X-VKB','P-2TTL'],
+      ['8S-0E1','D7T-C0'],
+      ['93PI-4','G-M4I8'],
+      ['A8I-C5','C-H9X7'],
+      ['A8I-C5','DK-FXK'],
+      ['A8I-C5','U-INPD'],
+      ['B8EN-S','X-7OMU'],
+      ['B-9C24','F-NMX6'],
+      ['B-9C24','P-2TTL'],
+      ['BDV3-T','ION-FG'],
+      ['BDV3-T','WW-KGD'],
+      ['C-H9X7','ION-FG'],
+      ['CL6-ZG','CXN1-Z'],
+      ['CL6-ZG','KLY-C0'],
+      ['CL6-ZG','RD-G2R'],
+      ['CR-AQH','Q-5211'],
+      ['CR-AQH','R-2R0G'],
+      ['CR-AQH','XQ-PXU'],
+      ['CXN1-Z','KLY-C0'],
+      ['CXN1-Z','X-7OMU'],
+      ['D2-HOS','HPS5-C'],
+      ['D2-HOS','MQ-NPY'],
+      ['D2-HOS','RQH-MY'],
+      ['D2-HOS','Y2-6EA'],
+      ['D7T-C0','KI-TL0'],
+      ['DK-FXK','M-76XI'],
+      ['DK-FXK','U-INPD'],
+      ['DK-FXK','ZJET-E'],
+      ['DT-TCD','Y2-6EA'],
+      ['EC-P8R','EWOK-K'],
+      ['EC-P8R','G-M4I8'],
+      ['EL8-4Q','JC-YX8'],
+      ['EL8-4Q','KI-TL0'],
+      ['EL8-4Q','N-H32Y'],
+      ['EWOK-K','G-M4I8'],
+      ['EWOK-K','O-N8XZ'],
+      ['E-Z2ZX','P-2TTL'],
+      ['E-Z2ZX','RORZ-H'],
+      ['F-NMX6','ZKYV-W'],
+      ['FWA-4V','RZC-16'],
+      ['FWA-4V','ZKYV-W'],
+      ['G95-VZ','J-CIJV'],
+      ['G95-VZ','KLY-C0'],
+      ['G95-VZ','ROIR-Y'],
+      ['G-M4I8','R-2R0G'],
+      ['H1-J33','KU5R-W'],
+      ['H1-J33','Y-C3EQ'],
+      ['J-CIJV','X47L-Q'],
+      ['J-CIJV','X-7OMU'],
+      ['JE-D5U','OE-9UF'],
+      ['JE-D5U','PFU-LH'],
+      ['JE-D5U','R6XN-9'],
+      ['KDV-DE','MT9Q-S'],
+      ['KDV-DE','UC3H-Y'],
+      ['KI-TL0','XI-VUF'],
+      ['KLY-C0','X-7OMU'],
+      ['KQK1-2','O-BY0Y'],
+      ['KQK1-2','X47L-Q'],
+      ['KU5R-W','RORZ-H'],
+      ['L-TS8S','O-N8XZ'],
+      ['L-TS8S','R6XN-9'],
+      ['L-TS8S','X-7OMU'],
+      ['M-76XI','ZJET-E'],
+      ['MI6O-6','O-N8XZ'],
+      ['MQ-NPY','RQH-MY'],
+      ['MQ-NPY','RZC-16'],
+      ['MQ-NPY','TFA0-U'],
+      ['MT9Q-S','UC3H-Y'],
+      ['M-YCD4','Q-5211'],
+      ['M-YCD4','R-2R0G'],
+      ['M-YCD4','XQ-PXU'],
+      ['O-A6YN','P-2TTL'],
+      ['O-A6YN','RORZ-H'],
+      ['OE-9UF','PFU-LH'],
+      ['OGV-AS','UI-8ZE'],
+      ['OGV-AS','Y-C3EQ'],
+      ['P-2TTL','RORZ-H'],
+      ['Q-5211','R-2R0G'],
+      ['R6XN-9','X-7OMU'],
+      ['RD-G2R','UC3H-Y'],
+      ['S-MDYI','ZKYV-W'],
+      ['TFA0-U','Y2-6EA'],
+      ['UR-E6D','X47L-Q'],
+      ['WW-KGD','XQ-PXU'],
+    ],
+    'Branch': [
+      ['0P9Z-I','Q-FEEJ'],
+      ['0P9Z-I','Z-K495'],
+      ['1G-MJE','C-LP3N'],
+      ['1G-MJE','RO90-H'],
+      ['1G-MJE','WO-AIJ'],
+      ['1IX-C0','W-4FA9'],
+      ['1IX-C0','Y-1918'],
+      ['2B7A-3','3F-JZF'],
+      ['313I-B','J9-5MQ'],
+      ['3F-JZF','5-0WB9'],
+      ['3F-JZF','C-4ZOS'],
+      ['3F-JZF','W-4FA9'],
+      ['3KNA-N','ME-4IU'],
+      ['3-N3OO','4-BE0M'],
+      ['3-N3OO','CS-ZGD'],
+      ['3-N3OO','ZIU-EP'],
+      ['3-TD6L','CX-1XF'],
+      ['3-TD6L','NLPB-0'],
+      ['3-TD6L','Q-NJZ4'],
+      ['3-TD6L','R4O-I6'],
+      ['4-48K1','EWN-2U'],
+      ['4-48K1','NTV0-1'],
+      ['4-BE0M','A-G1FM'],
+      ['4-BE0M','P7Z-R3'],
+      ['4DTQ-K','B8O-KJ'],
+      ['4DTQ-K','EQI2-2'],
+      ['4DTQ-K','J9-5MQ'],
+      ['52G-NZ','5LJ-MD'],
+      ['52G-NZ','6-O5GY'],
+      ['52G-NZ','KV-8SN'],
+      ['52G-NZ','QCWA-Z'],
+      ['5LJ-MD','B8O-KJ'],
+      ['5LJ-MD','QCWA-Z'],
+      ['5-P1Y2','J52-BH'],
+      ['5-P1Y2','KMQ4-V'],
+      ['8-4GQM','BKG-Q2'],
+      ['8-4GQM','LRWD-B'],
+      ['8-4GQM','T-Q2DD'],
+      ['9-B1DS','CH9L-K'],
+      ['9-B1DS','KJ-QWL'],
+      ['9-B1DS','ME-4IU'],
+      ['9F-7PZ','C-LP3N'],
+      ['A-G1FM','CS-ZGD'],
+      ['A-G1FM','I-7RIS'],
+      ['A-G1FM','P7Z-R3'],
+      ['A-G1FM','ZIU-EP'],
+      ['AH-B84','HB7R-F'],
+      ['AH-B84','J7YR-1'],
+      ['AH-B84','JTAU-5'],
+      ['B8O-KJ','UB-UQZ'],
+      ['B8O-KJ','XM-4L0'],
+      ['B-GC1T','O-JPKH'],
+      ['BKG-Q2','LXWN-W'],
+      ['BKG-Q2','S-B7IT'],
+      ['BKG-Q2','X4UV-Z'],
+      ['BKG-Q2','Z-K495'],
+      ['BU-IU4','ME-4IU'],
+      ['BU-IU4','QYZM-W'],
+      ['BWI1-9','C-LBQS'],
+      ['BWI1-9','KL3O-J'],
+      ['C-4ZOS','K-8SQS'],
+      ['C-4ZOS','M-HU4V'],
+      ['C-4ZOS','NEH-CS'],
+      ['CH9L-K','I-7JR4'],
+      ['C-HCGU','NTV0-1'],
+      ['C-HCGU','Q-FEEJ'],
+      ['C-HCGU','XW-2XP'],
+      ['C-LBQS','J52-BH'],
+      ['C-LP3N','LXWN-W'],
+      ['CS-ZGD','V8W-QS'],
+      ['C-VGYO','K-8SQS'],
+      ['C-VGYO','O94U-A'],
+      ['C-VGYO','XW-JHT'],
+      ['CX-1XF','X4UV-Z'],
+      ['D4R-H7','EQI2-2'],
+      ['D4R-H7','J9-5MQ'],
+      ['DCI7-7','J7YR-1'],
+      ['DCI7-7','UQ9-3C'],
+      ['EWN-2U','PKG4-7'],
+      ['F-9F6Q','JTAU-5'],
+      ['HB7R-F','O-JPKH'],
+      ['I-7JR4','ME-4IU'],
+      ['I-7JR4','QYZM-W'],
+      ['J7YR-1','PKG4-7'],
+      ['J9-5MQ','Q-4DEC'],
+      ['JRZ-B9','S-B7IT'],
+      ['JRZ-B9','V8W-QS'],
+      ['JRZ-B9','X4UV-Z'],
+      ['KJ-QWL','KMQ4-V'],
+      ['KJ-QWL','SVB-RE'],
+      ['KL3O-J','R4O-I6'],
+      ['KMC-WI','VL3I-M'],
+      ['KV-8SN','QCWA-Z'],
+      ['LRWD-B','QXQ-BA'],
+      ['LXWN-W','RO90-H'],
+      ['MA-VDX','RO90-H'],
+      ['MA-VDX','WO-AIJ'],
+      ['M-HU4V','QXQ-BA'],
+      ['M-HU4V','X7R-JW'],
+      ['NLPB-0','Q-NJZ4'],
+      ['OJ-A8M','V8W-QS'],
+      ['PUWL-4','W-4FA9'],
+      ['QCWA-Z','XM-4L0'],
+      ['Q-NJZ4','R4O-I6'],
+      ['QXQ-BA','T-Q2DD'],
+      ['QXQ-BA','X7R-JW'],
+      ['UB-UQZ','XM-4L0'],
+      ['UB-UQZ','YG-82V'],
+      ['UQ9-3C','VL3I-M'],
+      ['V8W-QS','XW-2XP'],
+      ['XM-4L0','Z-K495'],
+    ],
+    'Tenal': [
+      ['0M-103','HE5T-A'],
+      ['0M-103','Z-LO6I'],
+      ['0-UVHJ','IG-ZAM'],
+      ['0-UVHJ','NCG-PW'],
+      ['0-UVHJ','U1TX-A'],
+      ['1BWK-S','NV-3KA'],
+      ['1BWK-S','RKE-CP'],
+      ['1BWK-S','U1TX-A'],
+      ['1QH-0K','PNS7-J'],
+      ['1QH-0K','W8O-19'],
+      ['1QH-0K','ZH3-BS'],
+      ['2-3Q2G','V7-MID'],
+      ['30-D5G','R-YWID'],
+      ['33CE-7','6-AOLS'],
+      ['3DR-CR','H1-ESN'],
+      ['3DR-CR','RLTG-3'],
+      ['3-QYVE','P-UCRP'],
+      ['5-O8B1','G06-8Y'],
+      ['5-O8B1','KW-1MV'],
+      ['5-O8B1','S-KSWL'],
+      ['6-AOLS','C-XNUA'],
+      ['6-AOLS','G06-8Y'],
+      ['6-AOLS','L-P3XM'],
+      ['6OYQ-Z','Z-LO6I'],
+      ['7D-PAT','C-XNUA'],
+      ['7D-PAT','V-LDEJ'],
+      ['A-1IJ9','RKE-CP'],
+      ['A-1IJ9','Y-YHZQ'],
+      ['A1RR-M','AR-5SY'],
+      ['A1RR-M','GW7P-8'],
+      ['A1RR-M','OE-4HB'],
+      ['A1RR-M','SF-XJS'],
+      ['AR-5SY','GW7P-8'],
+      ['AR-5SY','OE-4HB'],
+      ['DCJ-ZT','KMV-CQ'],
+      ['DCJ-ZT','O36A-P'],
+      ['EN-GTB','T-K10W'],
+      ['EN-GTB','ZK-YQ3'],
+      ['EOY-BG','IG-ZAM'],
+      ['EOY-BG','S-EVIQ'],
+      ['G06-8Y','IKTD-P'],
+      ['G06-8Y','SZ6-TA'],
+      ['G06-8Y','U-O2DA'],
+      ['G06-8Y','WV-0R2'],
+      ['GW7P-8','OE-4HB'],
+      ['GW7P-8','Y-YHZQ'],
+      ['GW7P-8','Z-SR1I'],
+      ['HB-FSO','J1-KJP'],
+      ['HB-FSO','R-YWID'],
+      ['I1-BE8','ZJ-QOO'],
+      ['I1-BE8','ZK-YQ3'],
+      ['IG-ZAM','NCG-PW'],
+      ['J1-KJP','R-YWID'],
+      ['J1-KJP','S-KSWL'],
+      ['JI-1UQ','MZPH-W'],
+      ['JI-1UQ','W0X-MG'],
+      ['JSI-LL','M-UC0S'],
+      ['JSI-LL','Q1U-IU'],
+      ['JSI-LL','SY0W-2'],
+      ['JSI-LL','U5-XW7'],
+      ['KMV-CQ','NV-3KA'],
+      ['KMV-CQ','U1TX-A'],
+      ['M-UC0S','SY0W-2'],
+      ['M-UC0S','V7-MID'],
+      ['MZPH-W','U5-XW7'],
+      ['MZPH-W','W0X-MG'],
+      ['MZPH-W','ZK-YQ3'],
+      ['NCG-PW','S-KSWL'],
+      ['NV-3KA','RKE-CP'],
+      ['O36A-P','Z-LO6I'],
+      ['PNS7-J','S-EVIQ'],
+      ['P-UCRP','V-LDEJ'],
+      ['RKE-CP','S-1LIO'],
+      ['RLTG-3','S-EVIQ'],
+      ['R-YWID','S-KSWL'],
+      ['SF-XJS','Y-YHZQ'],
+      ['SZ6-TA','U-O2DA'],
+      ['T-K10W','V-LDEJ'],
+      ['Y-YHZQ','Z-SR1I'],
+      ['ZH3-BS','ZJ-QOO'],
+      ['ZJ-QOO','ZXA-V6'],
+    ],
+    'Fade': [
+      ['0-ARFO','C-OK0R'],
+      ['8QMO-E','GME-PQ'],
+      ['8QMO-E','MPPA-A'],
+      ['8W-OSE','FIO1-8'],
+      ['8W-OSE','WQY-IQ'],
+      ['C4C-Z4','GME-PQ'],
+      ['C4C-Z4','L-C3O7'],
+      ['C8-CHY','E-9ORY'],
+      ['C-OK0R','YKSC-A'],
+      ['CR-IFM','E-9ORY'],
+      ['CR-IFM','HHK-VL'],
+      ['CR-IFM','P-33KR'],
+      ['DO6H-Q','HHK-VL'],
+      ['DO6H-Q','P-33KR'],
+      ['DW-T2I','O-CNPR'],
+      ['DW-T2I','P-33KR'],
+      ['E9KD-N','FIO1-8'],
+      ['E9KD-N','WQY-IQ'],
+      ['E-9ORY','HHK-VL'],
+      ['FIO1-8','YKSC-A'],
+      ['GME-PQ','MPPA-A'],
+      ['GME-PQ','X5-UME'],
+      ['I-UUI5','MPPA-A'],
+      ['K4YZ-Y','L-C3O7'],
+      ['K4YZ-Y','O1Y-ED'],
+      ['L-C3O7','O1Y-ED'],
+      ['L-C3O7','X36Y-G'],
+      ['L-SCBU','O1Y-ED'],
+      ['L-SCBU','O-CNPR'],
+      ['O1Y-ED','O-CNPR'],
+      ['O-CNPR','VRH-H7'],
+      ['VRH-H7','X36Y-G'],
+      ['X36Y-G','YKSC-A'],
+    ],
+    'Venal': [
+      ['0-BFTQ','BV-1JG'],
+      ['0-BFTQ','SS-GED'],
+      ['0-O2UT','B-CZXG'],
+      ['0-O2UT','FHB-QA'],
+      ['0-O2UT','JURU-T'],
+      ['0-O2UT','Q61Y-F'],
+      ['0-XIDJ','O-TVTD'],
+      ['0-XIDJ','P-GKF5'],
+      ['0-XIDJ','SBL5-R'],
+      ['1-Y6KI','9-266Q'],
+      ['1-Y6KI','H-PA29'],
+      ['1-Y6KI','YP-J33'],
+      ['2IBE-N','L-IE41'],
+      ['2PLH-3','4-7IL9'],
+      ['2PLH-3','B-CZXG'],
+      ['2PLH-3','RQ9-OZ'],
+      ['2TH-3F','H-AJ27'],
+      ['2TH-3F','WLF-D3'],
+      ['3A1P-N','N6G-H3'],
+      ['42XJ-N','G9D-XW'],
+      ['42XJ-N','Z3U-GI'],
+      ['430-BE','LHJ-2G'],
+      ['4-7IL9','MC6-5J'],
+      ['4RX-EE','SS-GED'],
+      ['4RX-EE','V3X-L8'],
+      ['4S-PVC','E1F-E5'],
+      ['65V-RH','B-CZXG'],
+      ['65V-RH','JURU-T'],
+      ['6NJ8-V','AJCJ-1'],
+      ['6NJ8-V','BV-1JG'],
+      ['6NJ8-V','Y-4CFK'],
+      ['6UQ-4U','LHJ-2G'],
+      ['6W-HRH','CSOA-B'],
+      ['6W-HRH','N5Y-4N'],
+      ['6ZJ-SC','P-VYVL'],
+      ['6ZJ-SC','VVD-O6'],
+      ['8CIX-S','O-TVTD'],
+      ['9-266Q','BV-1JG'],
+      ['9-266Q','D-8SI1'],
+      ['9-266Q','H-PA29'],
+      ['9-266Q','N6G-H3'],
+      ['92D-OI','N-5476'],
+      ['92K-H2','A-AFGR'],
+      ['92K-H2','AA-YRK'],
+      ['92K-H2','N6G-H3'],
+      ['92K-H2','OZ-VAE'],
+      ['9-8BL8','MQFX-Q'],
+      ['9IPC-E','EIV-1W'],
+      ['9IPC-E','QHJ-FW'],
+      ['9-R6GU','R-KZK7'],
+      ['A-AFGR','AA-YRK'],
+      ['A-AFGR','N6G-H3'],
+      ['A-AFGR','OZ-VAE'],
+      ['AJCJ-1','SS-GED'],
+      ['AZ-UWB','OJ-CT4'],
+      ['B3QP-K','G9D-XW'],
+      ['B3QP-K','GVZ-1W'],
+      ['B3QP-K','Z3U-GI'],
+      ['B-CZXG','MC6-5J'],
+      ['B-CZXG','RQ9-OZ'],
+      ['C2-DDA','YJ3-UT'],
+      ['CSOA-B','K3JR-J'],
+      ['D-8SI1','HBD-CC'],
+      ['D-8SI1','K3JR-J'],
+      ['D-8SI1','YP-J33'],
+      ['D-SKWC','HBD-CC'],
+      ['D-SKWC','SBL5-R'],
+      ['E1F-E5','M2-2V1'],
+      ['E-7U8U','HBD-CC'],
+      ['E-7U8U','P-GKF5'],
+      ['EIV-1W','QHJ-FW'],
+      ['EIV-1W','S-1ZXZ'],
+      ['EK2-ET','PZOZ-K'],
+      ['FHB-QA','G9D-XW'],
+      ['FHB-QA','Z3U-GI'],
+      ['GVZ-1W','Z3U-GI'],
+      ['H-AJ27','M2-2V1'],
+      ['H-AJ27','SE-SHZ'],
+      ['HBD-CC','P-GKF5'],
+      ['HBD-CC','SBL5-R'],
+      ['HD-JVQ','P-VYVL'],
+      ['HD-JVQ','VVD-O6'],
+      ['H-PA29','P-FSQE'],
+      ['H-S5BM','OJ-CT4'],
+      ['JURU-T','MC6-5J'],
+      ['JURU-T','QHJ-FW'],
+      ['KK-L97','N-Q5PW'],
+      ['KK-L97','Y6-HPG'],
+      ['KK-L97','Z-GY5S'],
+      ['LHJ-2G','PZOZ-K'],
+      ['LHJ-2G','SHJO-J'],
+      ['L-IE41','Q61Y-F'],
+      ['L-IE41','VG-QW1'],
+      ['MC6-5J','RQ9-OZ'],
+      ['MQFX-Q','N5Y-4N'],
+      ['N0C-UN','V3X-L8'],
+      ['N0C-UN','VG-6CH'],
+      ['N-5476','PZOZ-K'],
+      ['N-5476','S-1ZXZ'],
+      ['N-5476','SE-SHZ'],
+      ['N6G-H3','OZ-VAE'],
+      ['N-Q5PW','P-FSQE'],
+      ['OJ-CT4','SHJO-J'],
+      ['PF-QHK','Q-7SUI'],
+      ['PF-QHK','VG-6CH'],
+      ['PF-QHK','XW-6TC'],
+      ['P-VYVL','VVD-O6'],
+      ['P-VYVL','XW-6TC'],
+      ['PZOZ-K','W3KK-R'],
+      ['QHJ-FW','Z0-TJW'],
+      ['R-KZK7','Z-GY5S'],
+      ['VG-6CH','Z0-TJW'],
+      ['VG-QW1','YJ3-UT'],
+      ['VVD-O6','XW-6TC'],
+      ['Y6-HPG','Y-W1Q3'],
+      ['Y6-HPG','Z-GY5S'],
+      ['YJ3-UT','ZD4-G9'],
+    ],
+};
+
+const MAP_TRIAGE_PRESETS = {
+  all: 'All timers',
+  friendlySov: 'Friendly sov',
+  friendlyMajors: 'Friendly majors',
+  hostileMajors: 'Hostile majors',
+  keepstars: 'Keepstars',
+};
+
+const MAP_WAVES = [
+  {id:'now', label:'0-2h', maxMs:2*3600*1000, color:'#ff4d5d', cls:'wave-now'},
+  {id:'soon', label:'2-6h', maxMs:6*3600*1000, color:'#ffb22e', cls:'wave-soon'},
+  {id:'later', label:'6-12h', maxMs:12*3600*1000, color:'#35b8ff', cls:'wave-later'},
+  {id:'future', label:'12h+', maxMs:Infinity, color:'#a8b3c2', cls:'wave-future'},
+];
+
+function getWaveForTimer(timer, now){
+  const ms = timerDT(timer.date,timer.time).getTime() - now;
+  if(ms <= 0) return null;
+  return MAP_WAVES.find(w => ms <= w.maxMs).id;
+}
+
+function getWaveMeta(waveId){
+  return MAP_WAVES.find(w => w.id === waveId) || MAP_WAVES[MAP_WAVES.length-1];
+}
+
+function isMapMajorStructure(structure){
+  return MAJOR.includes(structure);
+}
+
+function passesMapTriagePreset(timer){
+  switch(mapTriagePreset){
+    case 'friendlySov':
+      return timer.status === 'Friendly' && (timer.structure === 'IHub' || timer.structure === 'TCU');
+    case 'friendlyMajors':
+      return timer.status === 'Friendly' && isMapMajorStructure(timer.structure);
+    case 'hostileMajors':
+      return timer.status === 'Hostile' && isMapMajorStructure(timer.structure);
+    case 'keepstars':
+      return timer.structure === 'Keepstar';
+    default:
+      return true;
+  }
+}
+
+function mapTriageSelect(){
+  const opts = Object.entries(MAP_TRIAGE_PRESETS).map(([value,label]) =>
+    `<option value="${value}"${mapTriagePreset===value?' selected':''}>${label}</option>`
+  ).join('');
+  return `<label class="map-triage-bar">
+    <span class="map-triage-label">Triage</span>
+    <select class="map-triage-select">${opts}</select>
+  </label>`;
+}
+
+function setMapTriagePreset(value){
+  if(!MAP_TRIAGE_PRESETS[value]) return;
+  mapTriagePreset = value;
+  render();
+}
+
+function waveLegend(){
+  return MAP_WAVES.map(w =>
+    `<div class="map-legend-item"><div class="map-wave-dot ${w.cls}"></div>${w.label}</div>`
+  ).join('');
+}
+
+function buildMapTriageGroups(timers, scope){
+  const now = Date.now();
+  const byWave = {};
+  timers.forEach(t => {
+    const waveId = getWaveForTimer(t, now);
+    if(!waveId) return;
+    const key = scope === 'region' ? t.system : `${t.region || 'Unknown'}|${t.system}`;
+    if(!byWave[waveId]) byWave[waveId] = {};
+    if(!byWave[waveId][key]){
+      byWave[waveId][key] = {
+        waveId,
+        system: t.system,
+        region: t.region || 'Unknown',
+        timers: [],
+        earliest: Infinity,
+      };
+    }
+    const entry = byWave[waveId][key];
+    entry.timers.push(t);
+    entry.earliest = Math.min(entry.earliest, timerDT(t.date,t.time).getTime());
+  });
+
+  return MAP_WAVES.map(w => ({
+    wave: w,
+    items: Object.values(byWave[w.id] || {}).sort((a,b) =>
+      a.earliest - b.earliest || b.timers.length - a.timers.length || a.system.localeCompare(b.system)
+    )
+  })).filter(group => group.items.length);
+}
+
+function renderMapActions(timers, scope){
+  const groups = buildMapTriageGroups(timers, scope);
+  if(!groups.length){
+    return `<div class="map-actions">
+      <div class="map-actions-title">Next actions</div>
+      <div class="map-actions-empty">No upcoming timers match this triage preset.</div>
+    </div>`;
+  }
+  return `<div class="map-actions">
+    <div class="map-actions-title">Next actions</div>
+    ${groups.map(group => `<div class="map-wave-group">
+      <div class="map-wave-head"><div class="map-wave-dot ${group.wave.cls}"></div>${group.wave.label}</div>
+      ${group.items.slice(0,12).map(item => renderMapActionRow(item, scope)).join('')}
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderMapActionRow(item, scope){
+  const first = item.timers.reduce((earliest,t) =>
+    timerDT(t.date,t.time).getTime() < timerDT(earliest.date,earliest.time).getTime() ? t : earliest
+  , item.timers[0]);
+  const hostile = item.timers.filter(t => t.status === 'Hostile').length;
+  const friendly = item.timers.filter(t => t.status === 'Friendly').length;
+  const topStructures = Array.from(new Set(item.timers.map(t => t.structure))).slice(0,3).join(', ');
+  const ms = timerDT(first.date,first.time).getTime() - Date.now();
+  const region = scope === 'universe' ? `${item.region} - ` : '';
+  return `<div class="map-action-row">
+    <div class="map-action-main">
+      <div class="map-action-sys">${mapTooltipText(item.system)}</div>
+      <div class="map-action-meta">${mapTooltipText(region + topStructures)}</div>
+    </div>
+    <div>
+      <div class="map-action-time">${first.time} - ${countdown(ms)}</div>
+      <div class="map-action-count">${item.timers.length} timers - ${hostile}H ${friendly}F</div>
+    </div>
+  </div>`;
+}
+function renderMap(list){
+  const now = Date.now();
+  const upcoming = list.filter(t => timerDT(t.date,t.time).getTime() > now);
+  const triageUpcoming = upcoming.filter(passesMapTriagePreset);
+
+  // Group by region
+  const byRegion = {};
+  triageUpcoming.forEach(t => {
+    const r = t.region || 'Unknown';
+    if(!byRegion[r]) byRegion[r] = {hostile:[], friendly:[], all:[]};
+    byRegion[r].all.push(t);
+    if(t.status==='Hostile') byRegion[r].hostile.push(t);
+    else byRegion[r].friendly.push(t);
+  });
+
+  const activeRegions = Object.keys(byRegion).sort((a,b) =>
+    (byRegion[b].hostile.length + byRegion[b].friendly.length) -
+    (byRegion[a].hostile.length + byRegion[a].friendly.length)
+  );
+
+  const W = 1000, H = 700;
+
+  // Build SVG nodes
+  let svgNodes = '';
+  const regionNodes = {};
+
+  // Draw all known regions as faint background nodes
+  Object.entries(REGION_POSITIONS).forEach(([name,[x,y]]) => {
+    const data = byRegion[name];
+    const total = data ? data.all.length : 0;
+    const hostile = data ? data.hostile.length : 0;
+    const friendly = data ? data.friendly.length : 0;
+    const r = total ? Math.max(14, Math.min(36, 12 + total * 2.5)) : 8;
+    const hasVisualMajor = data ? data.all.some(isVisualMajorTimer) : false;
+    const earliest = data ? data.all.reduce((best,t) =>
+      timerDT(t.date,t.time).getTime() < timerDT(best.date,best.time).getTime() ? t : best
+    , data.all[0]) : null;
+    const wave = earliest ? getWaveMeta(getWaveForTimer(earliest, now)) : null;
+
+    const fill = !total ? 'rgba(42,48,64,0.6)' : wave.color;
+
+    const stroke = !total ? 'var(--border)' :
+      hostile > friendly ? 'rgba(192,64,74,0.9)' :
+      friendly > hostile ? 'rgba(61,158,106,0.9)' :
+      'rgba(212,220,232,0.65)';
+
+    const strokeW = total ? 1.5 : 0.5;
+    const labelSize = total ? 9 : 7;
+    const labelColor = total ? '#d4dce8' : '#4a5568';
+
+    const shortName = name.replace('Vale of the Silent','Vale').replace('The Kalevala Expanse','Kalevala').replace('The Forge','Forge').replace('Perrigen Falls','Perrigen').replace('Etherium Reach','Eth. Reach').replace('Outer Passage','Outer Pass').replace('Cobalt Edge','Cobalt').replace('Paragon Soul','Paragon').replace('Period Basis','Per. Basis');
+
+    const regionArg = encodeURIComponent(name);
+    const hoverTimers = total ? encodeURIComponent(JSON.stringify(data.all.map(t=>({
+      date:t.date, time:t.time, system:t.system, name:t.name,
+      structure:t.structure, state:t.state, status:t.status,
+      dt:timerDT(t.date,t.time).toISOString()
+    })))) : '';
+    const mapAttrs = total
+      ? `data-map-region="${escapeAttr(regionArg)}" data-map-hover-region="${escapeAttr(regionArg)}" data-map-hover-timers="${escapeAttr(hoverTimers)}"`
+      : '';
+    const cursor = total ? 'cursor:pointer' : '';
+
+    svgNodes += `<g class="map-node${total?' map-node-active':''}" ${mapAttrs} style="${cursor}">
+      <circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeW}"/>`;
+
+    if(total){
+      // Hostile/friendly arc overlays keep side pressure visible while fill shows time wave.
+      if(hostile>0){
+        const frac = hostile/total;
+        const angle = frac * 2 * Math.PI;
+        const x1 = x + r * Math.sin(0);
+        const y1 = y - r * Math.cos(0);
+        const x2 = x + r * Math.sin(angle);
+        const y2 = y - r * Math.cos(angle);
+        const lg = frac > 0.5 ? 1 : 0;
+        svgNodes += `<path d="M${x},${y} L${x1},${y1} A${r},${r} 0 ${lg} 1 ${x2},${y2} Z" fill="rgba(0,0,0,0.18)" stroke="none" pointer-events="none"/>`;
+      }
+      // count label
+      svgNodes += `<text x="${x}" y="${y+1}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="10" font-weight="700" font-family="'JetBrains Mono',monospace" pointer-events="none">${total}</text>`;
+      if(hasVisualMajor){
+        svgNodes += `<circle cx="${x + r * 0.42}" cy="${y - r * 0.32}" r="3.2" fill="#ff4d5d" stroke="rgba(0,0,0,0.55)" stroke-width="1.1" pointer-events="none"/>`;
+      }
+    }
+
+    svgNodes += `<text x="${x}" y="${y+r+9}" text-anchor="middle" fill="${labelColor}" font-size="${labelSize}" font-family="Inter,sans-serif" pointer-events="none">${shortName}</text>
+    </g>`;
+
+    regionNodes[name] = {x, y, r};
+  });
+
+  // Region sidebar cards
+  const sidebarCards = activeRegions.slice(0,15).map(r => {
+    const d = byRegion[r];
+    const total = d.all.length;
+    const maxW = 80;
+    const hW = Math.round((d.hostile.length/total)*maxW);
+    const fW = Math.round((d.friendly.length/total)*maxW);
+    const enc = encodeURIComponent(JSON.stringify(d.all.map(t=>({
+      date:t.date, time:t.time, system:t.system, name:t.name,
+      structure:t.structure, state:t.state, status:t.status,
+      dt:timerDT(t.date,t.time).toISOString()
+    }))));
+    const regionArg = encodeURIComponent(r);
+    return `<div class="map-region-card" data-map-region="${escapeAttr(regionArg)}" data-map-hover-region="${escapeAttr(regionArg)}" data-map-hover-timers="${escapeAttr(enc)}">
+      <div class="map-rc-name">${escapeHtml(r)} <span style="font-size:9px;font-weight:400;color:var(--text-3)">${total} timer${total!==1?'s':''}</span></div>
+      <div class="map-rc-bars">
+        ${hW ? `<div class="map-rc-bar hostile" style="width:${hW}px"></div>` : ''}
+        ${fW ? `<div class="map-rc-bar friendly" style="width:${fW}px"></div>` : ''}
+        <span class="map-rc-nums">${d.hostile.length}H · ${d.friendly.length}F</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="view-map active-view">
+    ${mapTriageSelect()}
+    <div class="map-legend">
+      ${waveLegend()}
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--border-mid)"></div> No active timers</div>
+      <div class="map-legend-item"><span style="width:7px;height:7px;border-radius:50%;background:#ff4d5d;border:1px solid rgba(0,0,0,.55);display:inline-block"></span> Keepstar/Sotiyo/Fortizar</div>
+      <span style="color:var(--text-3);font-size:10px">· Circle size = matching timer count · Dark wedge = hostile fraction · Click region for detail</span>
+    </div>
+    <div class="map-wrap">
+      <div class="map-svg-wrap">
+        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="font-family:var(--font-sans)">
+          <rect width="${W}" height="${H}" fill="transparent"/>
+          ${svgNodes}
+        </svg>
+      </div>
+      <div class="map-sidebar">
+        ${activeRegions.length ? sidebarCards : '<div style="color:var(--text-3);font-size:12px;padding:12px">No upcoming timers match this triage preset.</div>'}
+        ${renderMapActions(triageUpcoming, 'universe')}
+        <div class="map-detail" id="mapDetail" style="display:none"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function mapSelectRegion(regionName, sourceList){
+  mapSysLeave();
+  activeMapRegion = regionName;
+  const now = Date.now();
+  const baseList = Array.isArray(sourceList) ? sourceList : TIMERS.filter(passes);
+  const timers = baseList.filter(t =>
+    (t.region||'Unknown') === regionName &&
+    timerDT(t.date,t.time).getTime() > now &&
+    passesMapTriagePreset(t)
+  ).sort((a,b) => timerDT(a.date,a.time) - timerDT(b.date,b.time));
+
+  // Group by system
+  const bySys = {};
+  timers.forEach(t => {
+    if(!bySys[t.system]) bySys[t.system] = [];
+    bySys[t.system].push(t);
+  });
+
+  const systems = Object.keys(bySys);
+  const count = systems.length;
+
+
+  // System topology positions on an 800x680 canvas. Generated blocks use SDE position2D data.
+  const SYSTEM_POSITIONS = {
+    // GEMINATE - generated from CCP EVE SDE position2D data
+    ...GEMINATE_REGION_POSITIONS,
+
+    // ── PURE BLIND ────────────────────────────────────────────────
+    'Y-C3EQ':   [150, 200], '7D-0SQ': [200, 240], 'B-9C24': [250, 190],
+    'O-A6YN':   [200, 290], 'KU5R-W': [250, 340], 'H1-J33': [300, 300],
+    'RORZ-H':   [350, 240], 'UI-8ZE': [350, 300], 'OGV-AS': [300, 350],
+    'P-2TTL':   [150, 340], 'E-Z2ZX': [200, 390], '7X-VKB': [250, 440],
+    'RQH-MY':   [350, 400], 'RD-G2R': [100, 380], 'MQ-NPY': [100, 440],
+    'RZC-16':   [150, 440], 'TFA0-U': [250, 490], 'D2-HOS': [300, 490],
+    '7RM-N0':   [150, 490], 'ZKYV-W': [200, 540], 'FWA-4V': [ 50, 490],
+    'F-NMX6':   [ 50, 440], 'Y2-6EA': [100, 340], 'HPS5-C': [350, 490],
+    'DT-TCD':   [400, 440], 'CL6-ZG': [400, 350], '7V-KHW': [300, 200],
+    'U6D-9A':   [200, 150],
+
+    // ── VENAL ─────────────────────────────────────────────────────
+    'PF-QHK':   [200, 150], 'P-VYVL': [250, 200], 'VVD-O6': [300, 150],
+    'Q-7SUI':   [350, 200], '6ZJ-SC': [300, 250],
+
+    // VALE OF THE SILENT - generated from EVE SDE position2D data
+    '05R-7A': [115, 496],
+    '0J3L-V': [224, 180],
+    '0MV-4W': [245, 311],
+    '0-R5TS': [300, 464],
+    '0R-F2F': [365, 355],
+    '1-GBBP': [289, 224],
+    '1N-FJ8': [365, 420],
+    '1VK-6B': [475, 355],
+    '1W-0KS': [551, 420],
+    '2DWM-2': [365, 387],
+    '3HX-DL': [93, 147],
+    '47L-J4': [224, 627],
+    '49-0LI': [158, 453],
+    '4GYV-Q': [191, 344],
+    '4-HWWF': [191, 387],
+    '5T-KM3': [398, 322],
+    '5ZO-NZ': [191, 529],
+    '669-IX': [333, 376],
+    '6WW-28': [256, 638],
+    '6Y-WRK': [398, 355],
+    '7G-H7D': [475, 322],
+    '7-K5EL': [333, 507],
+    '7-PO3P': [496, 453],
+    '7-UH4Z': [158, 529],
+    '8-TFDX': [453, 180],
+    '8TPX-N': [245, 376],
+    '97-M96': [289, 551],
+    '9-GBPD': [496, 60],
+    '9OO-LH': [104, 289],
+    'A3-RQ3': [518, 82],
+    'A8A-JN': [213, 660],
+    'A-QRQT': [518, 191],
+    'AZBR-2': [224, 245],
+    'B-588R': [213, 475],
+    'B-E3KQ': [398, 224],
+    'BR-6XP': [485, 202],
+    'C-DHON': [442, 615],
+    'C-FP70': [322, 235],
+    'C-J7CR': [333, 616],
+    'DAYP-G': [125, 387],
+    'E-D0VZ': [202, 595],
+    'EIDI-N': [82, 387],
+    'E-SCTX': [475, 398],
+    'FA-DMO': [115, 125],
+    'F-D49D': [442, 573],
+    'FH-TTC': [398, 496],
+    'FMBR-8': [398, 464],
+    'FS-RFL': [136, 475],
+    'G5ED-Y': [453, 224],
+    'G96R-F': [300, 289],
+    'GEKJ-9': [125, 180],
+    'G-LOIT': [245, 496],
+    'H-1EOH': [387, 595],
+    'H-5GUI': [365, 507],
+    'HE-V4V': [267, 431],
+    'H-EY0P': [453, 453],
+    'H-NOU5': [245, 529],
+    'H-UCD1': [300, 496],
+    'IFJ-EL': [180, 616],
+    'IPAY-2': [82, 605],
+    'IR-DYY': [420, 595],
+    'IT-YAU': [529, 398],
+    'JZV-F4': [540, 267],
+    'K8X-6B': [104, 333],
+    'KRUN-N': [104, 365],
+    'KX-2UI': [256, 562],
+    'LS9B-9': [442, 376],
+    'LS-JEP': [496, 104],
+    'LZ-6SU': [245, 453],
+    'MA-XAP': [300, 605],
+    'MC6O-F': [267, 398],
+    'MGAM-4': [507, 322],
+    'MO-FIF': [278, 584],
+    'MQ-O27': [431, 475],
+    'MY-T2P': [93, 180],
+    'N-5QPW': [147, 104],
+    'NCGR-Q': [300, 398],
+    'NFM-0V': [93, 213],
+    'N-HSK0': [158, 496],
+    'O-LR1H': [420, 245],
+    'P3EN-E': [82, 638],
+    'PM-DWE': [213, 365],
+    'PX5-LR': [518, 125],
+    'Q3-BAY': [540, 300],
+    'Q-EHMJ': [365, 540],
+    'Q-L07F': [147, 605],
+    'Q-R3GP': [71, 125],
+    'R-P7KL': [333, 409],
+    'R-RSZZ': [475, 278],
+    'RVCZ-C': [431, 409],
+    'S6QX-N': [507, 376],
+    'S-NJBB': [180, 649],
+    'T-GCGL': [245, 267],
+    'TVN-FM': [224, 289],
+    'T-ZWA1': [311, 202],
+    'U54-1L': [300, 431],
+    'UH-9ZG': [93, 245],
+    'UL-4ZW': [475, 245],
+    'UNAG-6': [475, 431],
+    'VI2K-J': [398, 431],
+    'V-NL3K': [267, 245],
+    'V-OJEN': [147, 420],
+    'VORM-W': [507, 278],
+    'WBR5-R': [224, 333],
+    'WMBZ-U': [518, 158],
+    'X445-5': [82, 311],
+    'X97D-W': [115, 529],
+    'XF-PWO': [333, 442],
+    'XSQ-TF': [365, 573],
+    'XV-8JQ': [60, 180],
+    'Y0-BVN': [158, 562],
+    'Y5J-EU': [420, 202],
+    'YMJG-4': [158, 387],
+    'YXIB-I': [60, 245],
+    'Y-ZXIO': [300, 322],
+    'Z-8Q65': [224, 213],
+    'ZA0L-U': [300, 256],
+    'ZLZ-1Z': [398, 387],
+
+
+    // ── DEKLEIN ───────────────────────────────────────────────────
+    '8S28-3':   [200, 100],
+
+    // ── THE FORGE ─────────────────────────────────────────────────
+    ...NORTHERN_REGION_POSITIONS,
+    'Oijanen':  [200, 200],
+  };
+
+  // All known region systems (for background dots)
+  const ALL_REGION_SYSTEMS = {
+    ...NORTHERN_REGION_SYSTEMS,
+    ...GEMINATE_REGION_SYSTEMS,
+    'Vale of the Silent': ['05R-7A','0J3L-V','0MV-4W','0-R5TS','0R-F2F','1-GBBP','1N-FJ8','1VK-6B','1W-0KS','2DWM-2','3HX-DL','47L-J4','49-0LI','4GYV-Q','4-HWWF','5T-KM3','5ZO-NZ','669-IX','6WW-28','6Y-WRK','7G-H7D','7-K5EL','7-PO3P','7-UH4Z','8-TFDX','8TPX-N','97-M96','9-GBPD','9OO-LH','A3-RQ3','A8A-JN','A-QRQT','AZBR-2','B-588R','B-E3KQ','BR-6XP','C-DHON','C-FP70','C-J7CR','DAYP-G','E-D0VZ','EIDI-N','E-SCTX','FA-DMO','F-D49D','FH-TTC','FMBR-8','FS-RFL','G5ED-Y','G96R-F','GEKJ-9','G-LOIT','H-1EOH','H-5GUI','HE-V4V','H-EY0P','H-NOU5','H-UCD1','IFJ-EL','IPAY-2','IR-DYY','IT-YAU','JZV-F4','K8X-6B','KRUN-N','KX-2UI','LS9B-9','LS-JEP','LZ-6SU','MA-XAP','MC6O-F','MGAM-4','MO-FIF','MQ-O27','MY-T2P','N-5QPW','NCGR-Q','NFM-0V','N-HSK0','O-LR1H','P3EN-E','PM-DWE','PX5-LR','Q3-BAY','Q-EHMJ','Q-L07F','Q-R3GP','R-P7KL','R-RSZZ','RVCZ-C','S6QX-N','S-NJBB','T-GCGL','TVN-FM','T-ZWA1','U54-1L','UH-9ZG','UL-4ZW','UNAG-6','VI2K-J','V-NL3K','V-OJEN','VORM-W','WBR5-R','WMBZ-U','X445-5','X97D-W','XF-PWO','XSQ-TF','XV-8JQ','Y0-BVN','Y5J-EU','YMJG-4','YXIB-I','Y-ZXIO','Z-8Q65','ZA0L-U','ZLZ-1Z'],
+  };
+
+  const allSysInRegion = ALL_REGION_SYSTEMS[regionName] || systems;
+
+  const W = 900, H = 720;
+
+  // For this region, filter to just systems in that region's coordinate set
+  // Fall back to grid layout for systems we don't have positions for
+  const positions = {};
+
+  // Try to use known positions first
+  allSysInRegion.forEach(sys => {
+    if(SYSTEM_POSITIONS[sys]) positions[sys] = SYSTEM_POSITIONS[sys];
+  });
+
+  // For unknown systems, fall back to grid layout
+  const unknown = systems.filter(s => !positions[s]);
+  if(unknown.length){
+    const cols = Math.ceil(Math.sqrt(unknown.length));
+    unknown.forEach((sys, i) => {
+      const col = i % cols, row = Math.floor(i / cols);
+      positions[sys] = [50 + col * 80, H - 80 - row * 50];
+    });
+  }
+
+  if(!Object.keys(positions).length){
+    const board = document.getElementById('timerboard');
+    board.innerHTML = `
+      <div class="view-map active-view">
+        <div class="map-breadcrumb">
+          <span class="map-bc-link" data-action="map-universe">🗺 Universe</span>
+          <span class="map-bc-sep">›</span>
+          <span class="map-bc-cur">${escapeHtml(regionName)}</span>
+        </div>
+        <div style="padding:40px;text-align:center;color:var(--text-3);font-size:12px">No timers match filter in this region</div>
+      </div>`;
+    return;
+  }
+
+  // Normalize to canvas — find bounding box of known positions and scale to fit
+  const posVals = Object.values(positions);
+  const xs = posVals.map(p=>p[0]), ys = posVals.map(p=>p[1]);
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  const rangeX = maxX-minX||1, rangeY = maxY-minY||1;
+  const pad = 70;
+  const scaleX = (W-pad*2)/rangeX, scaleY = (H-pad*2)/rangeY;
+  const scale = Math.min(scaleX, scaleY, 1.4); // don't over-stretch sparse regions
+  const offX = pad + (W-pad*2 - rangeX*scale)/2 - minX*scale;
+  const offY = pad + (H-pad*2 - rangeY*scale)/2 - minY*scale;
+
+  // Apply transform
+  Object.keys(positions).forEach(sys => {
+    const [x,y] = positions[sys];
+    positions[sys] = [Math.round(x*scale + offX), Math.round(y*scale + offY)];
+  });
+
+  // Build edges (connections) between known adjacent systems for visual context
+  // These are the actual EVE gate connections from the in-game map
+  const EDGES = {
+    ...NORTHERN_REGION_EDGES,
+    ...GEMINATE_REGION_EDGES,
+    'Vale of the Silent': [
+      ['05R-7A','FS-RFL'],
+      ['05R-7A','N-HSK0'],
+      ['05R-7A','X97D-W'],
+      ['0J3L-V','Z-8Q65'],
+      ['0MV-4W','T-GCGL'],
+      ['0MV-4W','TVN-FM'],
+      ['0-R5TS','H-UCD1'],
+      ['0-R5TS','U54-1L'],
+      ['0R-F2F','2DWM-2'],
+      ['0R-F2F','5T-KM3'],
+      ['0R-F2F','669-IX'],
+      ['1-GBBP','C-FP70'],
+      ['1-GBBP','T-ZWA1'],
+      ['1-GBBP','V-NL3K'],
+      ['1-GBBP','ZA0L-U'],
+      ['1N-FJ8','2DWM-2'],
+      ['1VK-6B','7G-H7D'],
+      ['1VK-6B','E-SCTX'],
+      ['1VK-6B','S6QX-N'],
+      ['1W-0KS','IT-YAU'],
+      ['2DWM-2','R-P7KL'],
+      ['3HX-DL','FA-DMO'],
+      ['3HX-DL','MY-T2P'],
+      ['3HX-DL','Q-R3GP'],
+      ['47L-J4','6WW-28'],
+      ['47L-J4','A8A-JN'],
+      ['47L-J4','E-D0VZ'],
+      ['47L-J4','IFJ-EL'],
+      ['49-0LI','N-HSK0'],
+      ['49-0LI','V-OJEN'],
+      ['4GYV-Q','4-HWWF'],
+      ['4GYV-Q','WBR5-R'],
+      ['4-HWWF','8TPX-N'],
+      ['4-HWWF','PM-DWE'],
+      ['4-HWWF','YMJG-4'],
+      ['5T-KM3','6Y-WRK'],
+      ['5T-KM3','B-E3KQ'],
+      ['5ZO-NZ','7-UH4Z'],
+      ['669-IX','NCGR-Q'],
+      ['669-IX','R-P7KL'],
+      ['6Y-WRK','ZLZ-1Z'],
+      ['7G-H7D','MGAM-4'],
+      ['7G-H7D','R-RSZZ'],
+      ['7G-H7D','VORM-W'],
+      ['7-K5EL','H-5GUI'],
+      ['7-K5EL','H-UCD1'],
+      ['7-PO3P','UNAG-6'],
+      ['7-UH4Z','N-HSK0'],
+      ['7-UH4Z','X97D-W'],
+      ['7-UH4Z','Y0-BVN'],
+      ['8-TFDX','BR-6XP'],
+      ['8-TFDX','G5ED-Y'],
+      ['8-TFDX','UL-4ZW'],
+      ['8-TFDX','Y5J-EU'],
+      ['8TPX-N','MC6O-F'],
+      ['8TPX-N','WBR5-R'],
+      ['97-M96','KX-2UI'],
+      ['9-GBPD','A3-RQ3'],
+      ['9-GBPD','LS-JEP'],
+      ['9OO-LH','K8X-6B'],
+      ['9OO-LH','UH-9ZG'],
+      ['9OO-LH','X445-5'],
+      ['A3-RQ3','LS-JEP'],
+      ['A3-RQ3','PX5-LR'],
+      ['A8A-JN','S-NJBB'],
+      ['A-QRQT','BR-6XP'],
+      ['A-QRQT','WMBZ-U'],
+      ['AZBR-2','TVN-FM'],
+      ['AZBR-2','Z-8Q65'],
+      ['B-588R','G-LOIT'],
+      ['B-588R','LZ-6SU'],
+      ['B-E3KQ','O-LR1H'],
+      ['B-E3KQ','Y5J-EU'],
+      ['BR-6XP','G5ED-Y'],
+      ['BR-6XP','UL-4ZW'],
+      ['C-DHON','IR-DYY'],
+      ['C-FP70','T-ZWA1'],
+      ['C-FP70','ZA0L-U'],
+      ['C-J7CR','MA-XAP'],
+      ['DAYP-G','EIDI-N'],
+      ['DAYP-G','KRUN-N'],
+      ['DAYP-G','V-OJEN'],
+      ['DAYP-G','YMJG-4'],
+      ['E-D0VZ','IFJ-EL'],
+      ['EIDI-N','IPAY-2'],
+      ['EIDI-N','K8X-6B'],
+      ['EIDI-N','KRUN-N'],
+      ['E-SCTX','S6QX-N'],
+      ['E-SCTX','UNAG-6'],
+      ['FA-DMO','N-5QPW'],
+      ['FA-DMO','Q-R3GP'],
+      ['F-D49D','IR-DYY'],
+      ['FH-TTC','FMBR-8'],
+      ['FH-TTC','H-5GUI'],
+      ['FH-TTC','MQ-O27'],
+      ['FMBR-8','VI2K-J'],
+      ['FS-RFL','N-HSK0'],
+      ['G5ED-Y','O-LR1H'],
+      ['G5ED-Y','UL-4ZW'],
+      ['G5ED-Y','Y5J-EU'],
+      ['G96R-F','Y-ZXIO'],
+      ['G96R-F','ZA0L-U'],
+      ['GEKJ-9','MY-T2P'],
+      ['G-LOIT','H-NOU5'],
+      ['G-LOIT','LZ-6SU'],
+      ['H-1EOH','IR-DYY'],
+      ['H-1EOH','XSQ-TF'],
+      ['H-5GUI','Q-EHMJ'],
+      ['HE-V4V','LZ-6SU'],
+      ['HE-V4V','MC6O-F'],
+      ['HE-V4V','NCGR-Q'],
+      ['H-EY0P','MQ-O27'],
+      ['H-EY0P','UNAG-6'],
+      ['H-NOU5','KX-2UI'],
+      ['IFJ-EL','Q-L07F'],
+      ['IFJ-EL','S-NJBB'],
+      ['IPAY-2','P3EN-E'],
+      ['IPAY-2','Q-L07F'],
+      ['IT-YAU','S6QX-N'],
+      ['JZV-F4','Q3-BAY'],
+      ['K8X-6B','KRUN-N'],
+      ['K8X-6B','X445-5'],
+      ['KX-2UI','MO-FIF'],
+      ['LS9B-9','RVCZ-C'],
+      ['MA-XAP','MO-FIF'],
+      ['MC6O-F','NCGR-Q'],
+      ['MGAM-4','Q3-BAY'],
+      ['MGAM-4','R-RSZZ'],
+      ['MGAM-4','VORM-W'],
+      ['MY-T2P','NFM-0V'],
+      ['MY-T2P','XV-8JQ'],
+      ['NCGR-Q','U54-1L'],
+      ['NFM-0V','UH-9ZG'],
+      ['O-LR1H','Y5J-EU'],
+      ['PM-DWE','WBR5-R'],
+      ['PX5-LR','WMBZ-U'],
+      ['Q3-BAY','VORM-W'],
+      ['Q-EHMJ','XSQ-TF'],
+      ['R-P7KL','XF-PWO'],
+      ['R-RSZZ','UL-4ZW'],
+      ['R-RSZZ','VORM-W'],
+      ['RVCZ-C','VI2K-J'],
+      ['RVCZ-C','ZLZ-1Z'],
+      ['T-GCGL','TVN-FM'],
+      ['T-GCGL','V-NL3K'],
+      ['TVN-FM','WBR5-R'],
+      ['UH-9ZG','YXIB-I'],
+      ['VI2K-J','ZLZ-1Z'],
+    ],
+  };
+
+  // Draw edges for this region
+  let edgeSvg = '';
+  const regionEdges = EDGES[regionName] || [];
+  regionEdges.forEach(([a,b]) => {
+    if(positions[a] && positions[b]){
+      const [x1,y1] = positions[a], [x2,y2] = positions[b];
+      edgeSvg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(42,48,64,0.9)" stroke-width="1.5"/>`;
+    }
+  });
+
+
+  // Build SVG system nodes — background systems first, then active ones on top
+  let svgSystems = '';
+
+  // First pass: faint background nodes for all systems in region
+  allSysInRegion.forEach(sys => {
+    if(bySys[sys]) return; // active systems drawn in second pass
+    const rawPos = SYSTEM_POSITIONS[sys];
+    if(!rawPos) return;
+    const rx = Math.round(rawPos[0]*scale + offX);
+    const ry = Math.round(rawPos[1]*scale + offY);
+    svgSystems += `<g>
+      <circle cx="${rx}" cy="${ry}" r="5" fill="rgba(42,48,64,0.85)" stroke="rgba(60,80,110,0.5)" stroke-width="1"/>
+      <text x="${rx}" y="${ry+14}" text-anchor="middle" fill="rgba(100,120,150,0.7)" font-size="7.5" font-family="'JetBrains Mono',monospace">${escapeHtml(sys)}</text>
+    </g>`;
+  });
+  systems.forEach(sys => {
+    const [x, y] = positions[sys];
+    const ts = bySys[sys];
+    const hostile = ts.filter(t=>t.status==='Hostile').length;
+    const friendly = ts.filter(t=>t.status==='Friendly').length;
+    const total = ts.length;
+    const earliest = ts.reduce((best,t) =>
+      timerDT(t.date,t.time).getTime() < timerDT(best.date,best.time).getTime() ? t : best
+    , ts[0]);
+    const wave = getWaveMeta(getWaveForTimer(earliest, now));
+    const hasUrgent = wave.id === 'now';
+    const hasVisualMajor = ts.some(isVisualMajorTimer);
+    const r = Math.max(14, Math.min(28, 12 + total*3));
+
+    const fill = wave.color;
+    const stroke = hostile > friendly
+      ? (hasUrgent ? '#e05560' : 'rgba(192,64,74,0.8)')
+      : friendly > hostile ? 'rgba(61,158,106,0.8)' : 'rgba(212,220,232,0.65)';
+
+    // Hostile/friendly arc split
+    let arc = '';
+    if(hostile>0 && friendly>0){
+      const frac = hostile/total;
+      const ang = frac*2*Math.PI;
+      const x1 = x + r*Math.sin(0), y1 = y - r*Math.cos(0);
+      const x2 = x + r*Math.sin(ang), y2 = y - r*Math.cos(ang);
+      arc = `<path d="M${x},${y} L${x1},${y1} A${r},${r} 0 ${frac>0.5?1:0} 1 ${x2},${y2} Z" fill="rgba(0,0,0,0.18)" stroke="none" pointer-events="none"/>`;
+    }
+
+    // Pulse ring for urgent timers
+    const pulse = hasUrgent
+      ? `<circle cx="${x}" cy="${y}" r="${r+6}" fill="none" stroke="rgba(192,64,74,0.35)" stroke-width="2" stroke-dasharray="3 3"/>`
+      : '';
+
+    // Encode timer data for hover tooltip
+    const enc = encodeURIComponent(JSON.stringify(ts.map(t=>({
+      date:t.date, time:t.time, system:t.system, name:t.name,
+      structure:t.structure, state:t.state, status:t.status,
+      dt:timerDT(t.date,t.time).toISOString()
+    }))));
+
+    svgSystems += `<g class="map-sys-node" style="cursor:default"
+        data-map-hover-system="${escapeAttr(encodeURIComponent(sys))}"
+        data-map-hover-timers="${escapeAttr(enc)}">
+      ${pulse}
+      <circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${hasUrgent?2.5:1.5}"/>
+      ${arc}
+      <text x="${x}" y="${y+1}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="${total>9?9:10}" font-weight="700" font-family="'JetBrains Mono',monospace" pointer-events="none">${total}</text>
+      ${hasVisualMajor ? `<circle cx="${x + r * 0.42}" cy="${y - r * 0.32}" r="3.2" fill="#ff4d5d" stroke="rgba(0,0,0,0.55)" stroke-width="1.1" pointer-events="none"/>` : ''}
+      <text x="${x}" y="${y+r+10}" text-anchor="middle" fill="var(--text-2)" font-size="9" font-family="Inter,sans-serif" pointer-events="none">${escapeHtml(sys)}</text>
+    </g>`;
+  });
+
+  // Replace board with drilldown view
+  const board = document.getElementById('timerboard');
+  board.innerHTML = `
+    <div class="view-map active-view">
+      <div class="map-breadcrumb">
+        <span class="map-bc-link" data-action="map-universe">🗺 Universe</span>
+        <span class="map-bc-sep">›</span>
+        <span class="map-bc-cur">${escapeHtml(regionName)}</span>
+        <span style="margin-left:auto;color:var(--text-3);font-size:10px">${systems.length} system${systems.length!==1?'s':''} · ${timers.length} timer${timers.length!==1?'s':''}</span>
+      </div>
+      ${mapTriageSelect()}
+      <div class="map-legend">
+        ${waveLegend()}
+        <div class="map-legend-item"><div style="width:14px;height:14px;border-radius:50%;border:2px dashed var(--red);background:transparent"></div> Urgent &lt;2h</div>
+        <div class="map-legend-item"><span style="width:7px;height:7px;border-radius:50%;background:#ff4d5d;border:1px solid rgba(0,0,0,.55);display:inline-block"></span> Keepstar/Sotiyo/Fortizar</div>
+        <span style="color:var(--text-3);font-size:10px">· Hover a system to see its timers · Number = timer count</span>
+      </div>
+      <div class="map-wrap">
+        <div class="map-svg-wrap">
+          <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+            <rect width="${W}" height="${H}" fill="transparent"/>
+            <text x="${W/2}" y="22" text-anchor="middle" fill="var(--text-3)" font-size="13" font-weight="600" font-family="Inter,sans-serif">${escapeHtml(regionName)}</text>
+            <g class="edges">${edgeSvg}</g>
+            ${svgSystems}
+          </svg>
+        </div>
+        <div class="map-sidebar">
+          ${renderMapActions(timers, 'region')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function mapTooltipText(value){
+  return escapeHtml(value);
+}
+
+function mapRegionHover(event, regionNameEnc, enc){
+  const tooltip = document.getElementById('mapSysTooltip');
+  if(!tooltip) return;
+  const now = Date.now();
+  let ts; try{ ts=JSON.parse(decodeURIComponent(enc)); }catch(e){ console.warn('mapRegionHover parse error', e); return; }
+  let regionName; try{ regionName=decodeURIComponent(regionNameEnc); }catch(e){ regionName=regionNameEnc; }
+  ts.sort((a,b)=>new Date(a.dt)-new Date(b.dt));
+
+  const visible = ts.slice(0, 12);
+  const rows = visible.map(t=>{
+    const ms = new Date(t.dt).getTime()-now;
+    const cdCls = ms<30*60*1000?'urgent':ms<2*3600*1000?'soon':'';
+    const title = t.name && t.name !== '—' ? ` · ${t.name}` : '';
+    return `<div class="mst-row" title="${mapTooltipText(`${t.date} ${t.time} UTC · ${t.system}${title}`)}">
+      <div class="mst-dot ${t.status==='Hostile'?'hostile':'friendly'}"></div>
+      <div style="width:38px;font-family:var(--font-mono);color:var(--text-2);white-space:nowrap">${mapTooltipText(t.time)}</div>
+      <div style="width:58px;font-family:var(--font-mono);color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${mapTooltipText(t.system)}</div>
+      <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${mapTooltipText(t.structure)} · ${mapTooltipText(t.state)}</div>
+      <div class="mst-cd ${cdCls}">${countdown(ms)}</div>
+    </div>`;
+  }).join('');
+  const more = ts.length > visible.length
+    ? `<div class="mst-row" style="color:var(--text-3);font-size:10px">+${ts.length-visible.length} more timer${ts.length-visible.length!==1?'s':''}</div>`
+    : '';
+
+  tooltip.innerHTML = `<div class="mst-sys">${mapTooltipText(regionName)} · ${ts.length} timer${ts.length!==1?'s':''}</div>${rows}${more}`;
+  tooltip.style.display = 'block';
+  _mapSysMoveAt(event);
+}
+
+function mapSysHover(event, sys, enc){
+  const tooltip = document.getElementById('mapSysTooltip');
+  if(!tooltip) return;
+  const now = Date.now();
+  let ts; try{ ts=JSON.parse(decodeURIComponent(enc)); }catch(e){ console.warn('mapSysHover parse error', e); return; }
+  ts.sort((a,b)=>new Date(a.dt)-new Date(b.dt));
+  const visible = ts.slice(0, 12);
+  const rows = visible.map(t=>{
+    const ms = new Date(t.dt).getTime()-now;
+    const cdCls = ms<30*60*1000?'urgent':ms<2*3600*1000?'soon':'';
+    return `<div class="mst-row">
+      <div class="mst-dot ${t.status==='Hostile'?'hostile':'friendly'}"></div>
+      <div style="width:38px;font-family:var(--font-mono);color:var(--text-2);white-space:nowrap">${mapTooltipText(t.time)}</div>
+      <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(t.structure)} · ${escapeHtml(t.state)}</div>
+      <div class="mst-cd ${cdCls}">${countdown(ms)}</div>
+    </div>`;
+  }).join('');
+  const more = ts.length > visible.length
+    ? `<div class="mst-row" style="color:var(--text-3);font-size:10px">+${ts.length-visible.length} more timer${ts.length-visible.length!==1?'s':''}</div>`
+    : '';
+  tooltip.innerHTML = `<div class="mst-sys">${mapTooltipText(sys)} · ${ts.length} timer${ts.length!==1?'s':''}</div>${rows}${more}`;
+  tooltip.style.display = 'block';
+  _mapSysMoveAt(event);
+}
+
+function _mapSysMoveAt(event){
+  const t = document.getElementById('mapSysTooltip');
+  if(!t||t.style.display==='none') return;
+  const x=event.clientX+14, y=event.clientY-10;
+  const tw=t.offsetWidth||200, th=t.offsetHeight||120;
+  const lx = x+tw>window.innerWidth ? x-tw-28 : x;
+  const ly = y+th>window.innerHeight ? y-th : y;
+  t.style.left=Math.max(0,lx)+'px';
+  t.style.top=Math.max(0,ly)+'px';
+}
+
+function mapSysLeave(){
+  const t=document.getElementById('mapSysTooltip');
+  if(t){
+    t.style.display='none';
+    t.innerHTML='';
+  }
+}
+
+document.addEventListener('mousemove', _mapSysMoveAt);
+
+
+/* ════════════════════════════════
+   MAIN RENDER
+════════════════════════════════ */
+function render(){
+  mapSysLeave();
+  buildRegionFilterOptions();
+buildStructureFilterOptions();
+  const list=TIMERS.filter(passes);
+  const board=document.getElementById('timerboard');
+  if(!list.length && !(currentView==='map' && activeMapRegion)){board.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-3);font-size:12px">No timers match filter</div>';document.getElementById('dayNav').innerHTML='';return;}
+  const groups={};
+  list.forEach(t=>{(groups[t.date]=groups[t.date]||[]).push(t);});
+  const todayStr=new Date().toISOString().split('T')[0];
+  const dates=Object.keys(groups).sort();
+  // Day nav only for table
+  if(currentView==='table')renderDayNav(dates,todayStr);
+  else{const nav=document.getElementById('dayNav');if(nav)nav.innerHTML='';}
+  switch(currentView){
+    case'summary': board.innerHTML=renderSummary(list,groups,dates,todayStr);break;
+    case'compact': board.innerHTML=renderCompact(list,groups,dates,todayStr);break;
+    case'grid':  board.innerHTML=renderGrid(list,groups,dates,todayStr);break;
+    case'gantt': board.innerHTML=renderGantt(list,groups,dates,todayStr);break;
+    case'map':
+      if(activeMapRegion) mapSelectRegion(activeMapRegion, list);
+      else board.innerHTML=renderMap(list);
+      break;
+    default:     board.innerHTML=renderTable(list,groups,dates,todayStr);
+  }
+  tickCountdowns();
+}
+
+/* ════════════════════════════════
+   TICK
+════════════════════════════════ */
+function tickCountdowns(){
+  const now=Date.now();
+  document.querySelectorAll('[data-dt]').forEach(el=>{
+    const ms=new Date(el.dataset.dt).getTime()-now;
+    const elp=ms<=0;
+    // Only update text on countdown-style elements, not tl-pills (they show label not countdown)
+    if(!el.classList.contains('tl-pill')){
+      el.textContent=elp?'elapsed':countdown(ms);
+      el.className=el.className.replace(/\burgent\b|\bsoon\b/g,'').trim();
+      if(!elp&&ms<30*60*1000) el.classList.add('urgent');
+      else if(!elp&&ms<2*3600*1000) el.classList.add('soon');
+    }
+    // Mark parent elapsed
+    const row=el.closest('tr,.dc,.grid-card,.compact-row,.tl-pill,.tl-row');
+    if(row) row.classList.toggle('elapsed',elp);
+  });
+  renderTimeline();
+}
+
+function clockTick(){
+  const n=new Date();
+  document.getElementById('liveClock').textContent=String(n.getUTCHours()).padStart(2,'0')+':'+String(n.getUTCMinutes()).padStart(2,'0')+':'+String(n.getUTCSeconds()).padStart(2,'0');
+}
+
+
+// Compact day collapse (shared via localStorage)
+const compactCollapseKey = 'compactCollapsedDays';
+function getCompactCollapsed(){
+  try{ return JSON.parse(localStorage.getItem(compactCollapseKey)||'{}'); }catch(e){ return {}; }
+}
+function setCompactCollapsed(obj){
+  localStorage.setItem(compactCollapseKey, JSON.stringify(obj||{}));
+}
+function applyCompactCollapsed(){
+  const collapsed = getCompactCollapsed();
+  document.querySelectorAll('.compact-day').forEach(day=>{
+    const d = day.getAttribute('data-date');
+    day.classList.toggle('collapsed', !!collapsed[d]);
+  });
+}
+document.addEventListener('click', (e)=>{
+  const hdr = e.target.closest('.compact-section-header');
+  if(!hdr) return;
+  const date = hdr.getAttribute('data-collapse');
+  if(!date) return;
+  const collapsed = getCompactCollapsed();
+  collapsed[date] = !collapsed[date];
+  setCompactCollapsed(collapsed);
+  applyCompactCollapsed();
+});
+
+
+/* ════════════════════════════════
+   INIT
+════════════════════════════════ */
+renderStats();
+window.addEventListener('resize', positionTutorialPointer);
+render();
+applyCompactCollapsed();
+renderTimeline();
+clockTick();
+openTutorial();
+setInterval(clockTick,1000);
+setInterval(tickCountdowns,1000);
+</script>
+</body>
+</html>

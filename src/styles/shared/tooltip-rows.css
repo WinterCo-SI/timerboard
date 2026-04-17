@@ -1,0 +1,49 @@
+.mst-sys {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+  margin-bottom: 5px;
+}
+
+.mst-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.mst-row:last-child {
+  border-bottom: none;
+}
+
+.mst-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mst-dot.hostile {
+  background: var(--red);
+}
+
+.mst-dot.friendly {
+  background: var(--green);
+}
+
+.mst-cd {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+.mst-cd.urgent {
+  color: var(--red);
+}
+
+.mst-cd.soon {
+  color: var(--amber);
+}
