@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Timer } from '../../types/timer';
 import { formatDate, isVisualMajor, timerDateTime } from '../../utils/timer-utils';
+import { computed } from 'vue';
 
 const props = defineProps<{
   groups: Record<string, Timer[]>;
@@ -8,6 +9,16 @@ const props = defineProps<{
   today: string;
   nowMs: number;
 }>();
+
+const ownersByDate = computed(() => {
+  const map: Record<string, string[]> = {};
+  for (const date of props.dates) {
+    const timers = props.groups[date] || [];
+    const owners = Array.from(new Set(timers.map(t => (t as any).owner).filter(Boolean)));
+    if (owners.length) map[date] = owners;
+  }
+  return map;
+});
 
 const HOURS = 24;
 const PX_PER_HOUR = 100;
@@ -43,6 +54,9 @@ function leftForTime(time: string): number {
       <div class="tl-section-header" :class="{ today: date === today }">
         {{ date === today ? '▶ Today — ' : '' }}{{ formatDate(date) }}
         <span class="dsh-count">{{ groups[date]?.length ?? 0 }} timer{{ (groups[date]?.length ?? 0) === 1 ? '' : 's' }}</span>
+        <template v-if="ownersByDate[date] && ownersByDate[date].length">
+          <span class="dsh-owners"> — {{ ownersByDate[date].join(', ') }}</span>
+        </template>
       </div>
       <div class="tl-scroll">
         <div class="tl-inner" :style="{ width: `${TOTAL_WIDTH}px` }">

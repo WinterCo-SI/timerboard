@@ -268,7 +268,7 @@ tr.elapsed .cell-time {
 }
 
 .cell-system {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--blue);
   white-space: nowrap;
 }
