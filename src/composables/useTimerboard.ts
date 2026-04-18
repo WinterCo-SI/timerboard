@@ -135,7 +135,28 @@ export const useTimerboard = defineStore('timerboard', () => {
       if (String(idVal) === 'Auth' && struct.includes('skyhook')) continue;
       mapped.push(mappedItem);
     }
-    return mapped;
+    // Deduplicate by system|name|structure|state — keep the earliest timer (by date+time)
+    const deduped = new Map<string, Partial<Timer>>();
+    for (const item of mapped) {
+      const key = `${item.system || ''}|${item.name || ''}|${item.structure || ''}|${item.state || ''}`;
+      const existing = deduped.get(key);
+      if (!existing) {
+        deduped.set(key, item);
+        continue;
+      }
+      // Compare date+time to keep earliest
+      try {
+        const a = new Date(`${item.date}T${item.time}:00Z`).getTime();
+        const b = new Date(`${existing.date}T${existing.time}:00Z`).getTime();
+        if (!Number.isNaN(a) && (Number.isNaN(b) || a < b)) {
+          deduped.set(key, item);
+        }
+      } catch {
+        // fallback: keep existing
+      }
+    }
+
+    return Array.from(deduped.values());
   }
 
   function setTimersFromRemote(list: Partial<Timer>[]) {

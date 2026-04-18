@@ -85,6 +85,10 @@ const mapTooltip = reactive({
     id: string;
     status: 'Hostile' | 'Friendly';
     label: string;
+    name?: string;
+    owner?: string;
+    structure?: string;
+    state?: string;
     countdown: string;
     countdownCls: '' | 'soon' | 'urgent';
   }>,
@@ -1141,8 +1145,10 @@ watch(universePanBounds, () => {
             <div class="map-wave-head"><span class="map-wave-dot" :class="group.wave.cls" />{{ group.wave.label }}</div>
             <div v-for="item in group.items.slice(0, 10)" :key="`${item.region}-${item.system}`" class="map-action-row">
               <div class="map-action-main">
-                <div class="map-action-sys">{{ item.system }}</div>
-                <div class="map-action-meta">{{ selectedRegion ? item.timers[0]?.structure : `${item.region} - ${item.timers[0]?.structure}` }}</div>
+                <div class="map-action-sys">{{ selectedRegion ? item.system : `${item.system} < ${item.region}` }}</div>
+                <div class="map-action-meta" :title="item.timers[0]?.structure">
+                  {{ item.timers[0]?.structure }}
+                </div>
               </div>
               <div>
                 <div style="display:flex;align-items:center;gap:8px;">

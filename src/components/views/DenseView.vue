@@ -39,7 +39,6 @@ defineProps<{
                 :class="timer.status === 'Friendly' ? 'ours' : 'theirs'"
                 :title="timer.owner ? `Owner: ${timer.owner}` : (timer.status || '')"
               >
-                <template v-if="timer.owner">{{ timer.owner }}</template>
               </span>
               <span class="dense-cd" :class="countdownClass(timerDateTime(timer).getTime() - nowMs)">
                 {{ timerDateTime(timer).getTime() <= nowMs ? 'elapsed' : countdown(timerDateTime(timer).getTime() - nowMs) }}
