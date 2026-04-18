@@ -206,8 +206,7 @@ function hideMarkerTooltip() {
 
 .timeline-now-label {
   position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--blue);
