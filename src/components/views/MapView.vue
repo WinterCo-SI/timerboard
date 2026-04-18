@@ -1405,9 +1405,10 @@ watch(universePanBounds, () => {
 }
 
 .map-action-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 6px 0;
   border-top: 1px solid var(--border);
   font-size: 11px;
@@ -1419,15 +1420,31 @@ watch(universePanBounds, () => {
 
 .map-action-main {
   min-width: 0;
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
     .map-action-row {
   font-family: var(--font-mono);
   font-weight: 700;
   color: var(--blue);
+}
+
+/* Left side should ellipsize if there's not enough space; right side has priority and won't shrink */
+.map-action-main .map-action-sys,
+.map-action-main .map-action-meta {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.map-action-row > div:last-child {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .map-action-meta {
