@@ -95,7 +95,6 @@ export function normalizeStructureName(raw: string): string {
     ['i-hub', 'Infrastructure Hub'],
     ['tcu', 'TCU'],
     ['fortizar', 'Fortizar'],
-
   ];
 
   const found = table.find(([needle]) => lower.includes(needle));
