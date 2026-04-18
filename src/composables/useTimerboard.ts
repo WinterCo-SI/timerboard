@@ -79,6 +79,7 @@ export const useTimerboard = defineStore('timerboard', () => {
         const sys = obj.system ? String(obj.system) : String(obj.system_name || obj.systemName || obj.system || '');
         const region = obj.region ? String(obj.region) : (typeof sys === 'string' && sys ? (SYSTEM_REGION_LOOKUP[sys] || '') : '');
         return {
+          id: obj.id ? String(obj.id) : '',
           date: String(obj.date),
           time: String(obj.time),
           system: sys,
@@ -102,6 +103,7 @@ export const useTimerboard = defineStore('timerboard', () => {
             const sys = obj.system ? String(obj.system) : String(obj.system_name || obj.systemName || '');
             const region = obj.region ? String(obj.region) : (sys ? (SYSTEM_REGION_LOOKUP[sys] || '') : '');
             return {
+                id: obj.id ? String(obj.id) : '',
               date,
               time,
               system: sys,
@@ -143,17 +145,30 @@ export const useTimerboard = defineStore('timerboard', () => {
     }
 
     const deduped = new Map<string, Partial<Timer>>();
+    const SEAT_PRIORITY_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
     for (const item of mapped) {
-      const key = `${normalizeKey(item.system)}|${normalizeKey(item.name)}|${normalizeKey(item.structure)}|${normalizeKey(item.state)}`;
+      // Deduplicate across states: base key excludes `state` so we can prefer SeAT when needed
+      const key = `${normalizeKey(item.system)}|${normalizeKey(item.name)}|${normalizeKey(item.structure)}`;
       const existing = deduped.get(key);
       if (!existing) {
         deduped.set(key, item);
         continue;
       }
-      // Compare date+time to keep earliest
+      // If same name and very close times, prefer item with id === 'SeAT'
       try {
         const a = new Date(`${item.date}T${item.time}:00Z`).getTime();
         const b = new Date(`${existing.date}T${existing.time}:00Z`).getTime();
+        if (!Number.isNaN(a) && !Number.isNaN(b) && normalizeKey(item.name) === normalizeKey(existing.name) && Math.abs(a - b) <= SEAT_PRIORITY_WINDOW_MS) {
+          if ((item as any).id === 'SeAT' && (existing as any).id !== 'SeAT') {
+            deduped.set(key, item);
+            continue;
+          }
+          if ((existing as any).id === 'SeAT' && (item as any).id !== 'SeAT') {
+            continue; // keep existing
+          }
+        }
+
+        // Fallback: keep earliest
         if (!Number.isNaN(a) && (Number.isNaN(b) || a < b)) {
           deduped.set(key, item);
         }
