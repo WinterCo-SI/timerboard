@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia';
 import { computed, reactive, ref } from 'vue';
-import { MAJOR_STRUCTURES, RAW_TIMERS, SYSTEM_REGION_LOOKUP } from '../data/timers';
+import {
+  MAJOR_STRUCTURES,
+  RAW_TIMERS,
+  SYSTEM_REGION_LOOKUP,
+} from '../data/timers';
+import i18next from '../i18n';
 import type { FilterState, Timer, TimerStats, TimerView } from '../types/timer';
 import {
   countdown,
@@ -8,23 +13,26 @@ import {
   localDateKey,
   localDayProgressPercent,
   localTimeLabel,
-  localTimeZoneLabel,
   localTimelinePercent,
+  localTimeZoneLabel,
   localTodayDate,
+  normalizeStructureName,
+  normalizeTimerState,
   parseDiscordTimerLine,
   sanitizeTimerList,
   stateKey,
   timerDateTime,
   toUtcClock,
-  normalizeTimerState,
-  normalizeStructureName,
 } from '../utils/timer-utils';
 
 const TIMER_DATA_KEY = 'timerboardTimersV4';
 const TIMER_API_URL = import.meta.env.PUBLIC_TIMERS_API_URL?.trim() ?? '';
 const TIMER_SSE_URL = import.meta.env.PUBLIC_TIMERS_SSE_URL?.trim() ?? '';
 const TIMER_POLL_MS = (() => {
-  const raw = import.meta.env.PUBLIC_TIMERS_POLL_MS ?? import.meta.env.PUBLIC_TIMERS_POLL_INTERVAL_MS ?? '';
+  const raw =
+    import.meta.env.PUBLIC_TIMERS_POLL_MS ??
+    import.meta.env.PUBLIC_TIMERS_POLL_INTERVAL_MS ??
+    '';
   const n = Number.parseInt(String(raw), 10);
   return Number.isFinite(n) && n > 0 ? n : 5 * 60 * 1000; // default 5 minutes
 })();
@@ -68,12 +76,16 @@ export const useTimerboard = defineStore('timerboard', () => {
   const timers = ref<Timer[]>([]);
   let eventSource: EventSource | null = null;
 
-  function timerKey(timer: Pick<Timer, 'date' | 'time' | 'system' | 'structure' | 'name'>): string {
+  function timerKey(
+    timer: Pick<Timer, 'date' | 'time' | 'system' | 'structure' | 'name'>,
+  ): string {
     return `${timer.date}|${timer.time}|${timer.system}|${timer.structure}|${timer.name}`;
   }
 
   function sortTimersInPlace(list: Timer[]) {
-    list.sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+    list.sort((a, b) =>
+      `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
+    );
   }
 
   function extractTimersPayload(payload: unknown): Partial<Timer>[] {
@@ -83,19 +95,35 @@ export const useTimerboard = defineStore('timerboard', () => {
 
       // If already has date/time keys, prefer them
       if (obj.date && obj.time) {
-        const sys = obj.system ? String(obj.system) : String(obj.system_name || obj.systemName || obj.system || '');
-        const region = obj.region ? String(obj.region) : (typeof sys === 'string' && sys ? (SYSTEM_REGION_LOOKUP[sys] || '') : '');
+        const sys = obj.system
+          ? String(obj.system)
+          : String(obj.system_name || obj.systemName || obj.system || '');
+        const region = obj.region
+          ? String(obj.region)
+          : typeof sys === 'string' && sys
+            ? SYSTEM_REGION_LOOKUP[sys] || ''
+            : '';
         return {
           id: obj.id ? String(obj.id) : '',
           date: String(obj.date),
           time: String(obj.time),
           system: sys,
-          name: obj.name ? String(obj.name) : String(obj.title || obj.name || ''),
-          structure: obj.structure ? String(obj.structure) : String(obj.type || obj.structure_type || ''),
-          state: obj.state ? String(obj.state) : String(obj.stage || obj.state || ''),
+          name: obj.name
+            ? String(obj.name)
+            : String(obj.title || obj.name || ''),
+          structure: obj.structure
+            ? String(obj.structure)
+            : String(obj.type || obj.structure_type || ''),
+          state: obj.state
+            ? String(obj.state)
+            : String(obj.stage || obj.state || ''),
           // Preserve owner_ticker separately and keep status sourced from stance/status
           status: obj.stance ? String(obj.stance) : String(obj.status || ''),
-          owner: obj.owner_ticker ? String(obj.owner_ticker) : (obj.owner ? String(obj.owner) : ''),
+          owner: obj.owner_ticker
+            ? String(obj.owner_ticker)
+            : obj.owner
+              ? String(obj.owner)
+              : '',
           region,
         };
       }
@@ -107,19 +135,35 @@ export const useTimerboard = defineStore('timerboard', () => {
           if (!Number.isNaN(d.getTime())) {
             const date = d.toISOString().slice(0, 10);
             const time = d.toISOString().slice(11, 16);
-            const sys = obj.system ? String(obj.system) : String(obj.system_name || obj.systemName || '');
-            const region = obj.region ? String(obj.region) : (sys ? (SYSTEM_REGION_LOOKUP[sys] || '') : '');
+            const sys = obj.system
+              ? String(obj.system)
+              : String(obj.system_name || obj.systemName || '');
+            const region = obj.region
+              ? String(obj.region)
+              : sys
+                ? SYSTEM_REGION_LOOKUP[sys] || ''
+                : '';
             return {
-                id: obj.id ? String(obj.id) : '',
+              id: obj.id ? String(obj.id) : '',
               date,
               time,
               system: sys,
-              name: obj.name ? String(obj.name) : String(obj.title || obj.name || ''),
-              structure: obj.type ? String(obj.type) : String(obj.structure || ''),
+              name: obj.name
+                ? String(obj.name)
+                : String(obj.title || obj.name || ''),
+              structure: obj.type
+                ? String(obj.type)
+                : String(obj.structure || ''),
               state: obj.stage ? String(obj.stage) : String(obj.state || ''),
               // Preserve owner_ticker separately and keep status sourced from stance/status
-              status: obj.stance ? String(obj.stance) : String(obj.status || ''),
-              owner: obj.owner_ticker ? String(obj.owner_ticker) : (obj.owner ? String(obj.owner) : ''),
+              status: obj.stance
+                ? String(obj.stance)
+                : String(obj.status || ''),
+              owner: obj.owner_ticker
+                ? String(obj.owner_ticker)
+                : obj.owner
+                  ? String(obj.owner)
+                  : '',
               region,
             };
           }
@@ -131,7 +175,8 @@ export const useTimerboard = defineStore('timerboard', () => {
       return null;
     };
 
-    if (Array.isArray(payload)) return (payload as Partial<Timer>[]).map((p) => p);
+    if (Array.isArray(payload))
+      return (payload as Partial<Timer>[]).map((p) => p);
     if (!payload || typeof payload !== 'object') return [];
     const source = payload as { timers?: unknown };
     const rawList = Array.isArray(source.timers) ? source.timers : [];
@@ -146,7 +191,11 @@ export const useTimerboard = defineStore('timerboard', () => {
       mapped.push(mappedItem);
     }
     // Normalize state values and deduplicate by normalized system|name|structure|state — keep earliest timer
-    const normalizeKey = (s: unknown) => (typeof s === 'string' ? s : String(s ?? '')).toLowerCase().replace(/\s+/g, ' ').trim();
+    const normalizeKey = (s: unknown) =>
+      (typeof s === 'string' ? s : String(s ?? ''))
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
     for (const it of mapped) {
       if (it.state) it.state = normalizeTimerState(it.state);
     }
@@ -165,7 +214,12 @@ export const useTimerboard = defineStore('timerboard', () => {
       try {
         const a = new Date(`${item.date}T${item.time}:00Z`).getTime();
         const b = new Date(`${existing.date}T${existing.time}:00Z`).getTime();
-        if (!Number.isNaN(a) && !Number.isNaN(b) && normalizeKey(item.name) === normalizeKey(existing.name) && Math.abs(a - b) <= SEAT_PRIORITY_WINDOW_MS) {
+        if (
+          !Number.isNaN(a) &&
+          !Number.isNaN(b) &&
+          normalizeKey(item.name) === normalizeKey(existing.name) &&
+          Math.abs(a - b) <= SEAT_PRIORITY_WINDOW_MS
+        ) {
           if ((item as any).id === 'SeAT' && (existing as any).id !== 'SeAT') {
             deduped.set(key, item);
             continue;
@@ -211,7 +265,8 @@ export const useTimerboard = defineStore('timerboard', () => {
 
   function deleteTimers(payload: TimerDeletePayload) {
     const keys = new Set<string>();
-    if (typeof payload.key === 'string' && payload.key.trim()) keys.add(payload.key.trim());
+    if (typeof payload.key === 'string' && payload.key.trim())
+      keys.add(payload.key.trim());
     for (const key of payload.keys ?? []) {
       if (typeof key === 'string' && key.trim()) keys.add(key.trim());
     }
@@ -249,7 +304,9 @@ export const useTimerboard = defineStore('timerboard', () => {
 
     if (type === 'upsert') {
       const upsertPayload = payload as TimerUpsertPayload;
-      const list = upsertPayload?.timer ? [upsertPayload.timer] : extractTimersPayload(upsertPayload);
+      const list = upsertPayload?.timer
+        ? [upsertPayload.timer]
+        : extractTimersPayload(upsertPayload);
       upsertTimers(list);
       return;
     }
@@ -268,41 +325,70 @@ export const useTimerboard = defineStore('timerboard', () => {
       });
 
       if (!response.ok) {
-          if (response.status === 401) {
-            importStatus.value = 'Timer API returned 401 — authentication required. Please refresh and reauthenticate.';
-            authRequired.value = true;
-          } else {
-            importStatus.value = `Timer API returned ${response.status}. Using local timers.`;
-          }
+        if (response.status === 401) {
+          importStatus.value = i18next.t('status.api401');
+          authRequired.value = true;
+        } else {
+          importStatus.value = i18next.t('status.apiReturned', {
+            status: response.status,
+          });
+        }
         return;
       }
 
-      const payload = (await response.json()) as TimerSnapshotPayload | Partial<Timer>[];
+      const payload = (await response.json()) as
+        | TimerSnapshotPayload
+        | Partial<Timer>[];
       // Surface returned payload for diagnosis (always log so UI can be used to report issues)
       // eslint-disable-next-line no-console
-      console.debug('[useTimerboard] fetchRemoteSnapshot:', { url: TIMER_API_URL, status: response.status, payload });
+      console.debug('[useTimerboard] fetchRemoteSnapshot:', {
+        url: TIMER_API_URL,
+        status: response.status,
+        payload,
+      });
       const extracted = extractTimersPayload(payload);
       if (!Array.isArray(payload) && !extracted.length) {
-        console.debug('[useTimerboard] fetchRemoteSnapshot: No timers extracted from payload', { payload });
-        importStatus.value = `Timer API returned no timers (payload keys: ${payload && typeof payload === 'object' ? Object.keys(payload).join(',') : typeof payload}).`;
+        console.debug(
+          '[useTimerboard] fetchRemoteSnapshot: No timers extracted from payload',
+          { payload },
+        );
+        importStatus.value = i18next.t('status.apiNoTimers', {
+          keys:
+            payload && typeof payload === 'object'
+              ? Object.keys(payload).join(',')
+              : typeof payload,
+        });
         return;
       }
 
       // Diagnose sanitization: show counts for extracted vs sanitized
-      const sanitizedPreview = sanitizeTimerList(Array.isArray(payload) ? (payload as Partial<Timer>[]) : extracted);
+      const sanitizedPreview = sanitizeTimerList(
+        Array.isArray(payload) ? (payload as Partial<Timer>[]) : extracted,
+      );
       // eslint-disable-next-line no-console
-      console.debug('[useTimerboard] fetchRemoteSnapshot counts:', { extracted: (Array.isArray(payload) ? payload.length : extracted.length), sanitized: sanitizedPreview.length });
-      importStatus.value = `API timers: ${Array.isArray(payload) ? payload.length : extracted.length}, usable: ${sanitizedPreview.length}`;
+      console.debug('[useTimerboard] fetchRemoteSnapshot counts:', {
+        extracted: Array.isArray(payload) ? payload.length : extracted.length,
+        sanitized: sanitizedPreview.length,
+      });
+      importStatus.value = i18next.t('status.apiTimers', {
+        total: Array.isArray(payload) ? payload.length : extracted.length,
+        usable: sanitizedPreview.length,
+      });
 
       setTimersFromRemote(Array.isArray(payload) ? payload : extracted);
       lastFetchMs.value = Date.now();
     } catch {
-      importStatus.value = 'Failed to load timer API snapshot. Using local timers.';
+      importStatus.value = i18next.t('status.apiFailed');
     }
   }
 
   function connectTimerStream() {
-    if (!TIMER_SSE_URL || typeof window === 'undefined' || typeof window.EventSource === 'undefined') return;
+    if (
+      !TIMER_SSE_URL ||
+      typeof window === 'undefined' ||
+      typeof window.EventSource === 'undefined'
+    )
+      return;
 
     closeEventStream();
     const stream = new EventSource(TIMER_SSE_URL);
@@ -334,7 +420,7 @@ export const useTimerboard = defineStore('timerboard', () => {
 
     stream.onerror = () => {
       // If SSE signals an error we can't parse status here; show reconnect message and fallback to polling.
-      importStatus.value = 'Live stream disconnected. Waiting for reconnect... (refresh to reauthenticate if needed)';
+      importStatus.value = i18next.t('status.liveDisconnected');
       // fallback to polling when stream errors
       startPolling();
     };
@@ -347,8 +433,13 @@ export const useTimerboard = defineStore('timerboard', () => {
     if (!TIMER_API_URL) return;
     // initial fetch
     void fetchRemoteSnapshot();
-    pollIntervalId = window.setInterval(() => void fetchRemoteSnapshot(), TIMER_POLL_MS);
-    importStatus.value = `Polling timer API every ${Math.round(TIMER_POLL_MS / 1000)}s.`;
+    pollIntervalId = window.setInterval(
+      () => void fetchRemoteSnapshot(),
+      TIMER_POLL_MS,
+    );
+    importStatus.value = i18next.t('status.polling', {
+      seconds: Math.round(TIMER_POLL_MS / 1000),
+    });
   }
 
   function stopPolling() {
@@ -403,7 +494,7 @@ export const useTimerboard = defineStore('timerboard', () => {
 
   function openImport() {
     if (DISABLE_PASTE) {
-      importStatus.value = 'Paste/import disabled by configuration.';
+      importStatus.value = i18next.t('status.pasteDisabled');
       return;
     }
     showImportModal.value = true;
@@ -432,7 +523,7 @@ export const useTimerboard = defineStore('timerboard', () => {
 
   function importTimers(mode: 'replace' | 'append') {
     if (DISABLE_PASTE) {
-      importStatus.value = 'Paste/import disabled by configuration.';
+      importStatus.value = i18next.t('status.pasteDisabled');
       return;
     }
     const lines = importText.value
@@ -451,8 +542,8 @@ export const useTimerboard = defineStore('timerboard', () => {
 
     if (!parsed.length) {
       importStatus.value = failed
-        ? 'No timers parsed. Check the expected Discord line format.'
-        : 'No timers found in pasted text.';
+        ? i18next.t('status.noTimersParsed')
+        : i18next.t('status.noTimersFound');
       return;
     }
 
@@ -460,7 +551,7 @@ export const useTimerboard = defineStore('timerboard', () => {
     sortTimersInPlace(timers.value);
     saveTimers();
 
-    importStatus.value = `Imported ${parsed.length} timer(s).${failed ? ` Failed to parse ${failed} line(s).` : ''}`;
+    importStatus.value = `${i18next.t('status.imported', { count: parsed.length })}${failed ? i18next.t('status.failedLines', { count: failed }) : ''}`;
   }
 
   function toggleArrayFilter<T extends string>(arr: T[], value: T) {
@@ -495,7 +586,10 @@ export const useTimerboard = defineStore('timerboard', () => {
 
   function toggleStructureVisibility(structure: string, visible: boolean) {
     const hidden = filters.hiddenStructures.includes(structure);
-    if (visible && hidden) filters.hiddenStructures = filters.hiddenStructures.filter((item) => item !== structure);
+    if (visible && hidden)
+      filters.hiddenStructures = filters.hiddenStructures.filter(
+        (item) => item !== structure,
+      );
     if (!visible && !hidden) filters.hiddenStructures.push(structure);
   }
 
@@ -537,10 +631,20 @@ export const useTimerboard = defineStore('timerboard', () => {
 
   const filteredTimers = computed(() => {
     return timers.value.filter((timer) => {
-      if (filters.side.length > 0 && !filters.side.includes(timer.status)) return false;
-      if (filters.state.length > 0 && !filters.state.includes(stateBucket(timer.state))) return false;
-      if (filters.major && !MAJOR_STRUCTURES.includes(timer.structure)) return false;
-      if (filters.regions.length > 0 && !filters.regions.includes(timer.region || 'Unknown')) return false;
+      if (filters.side.length > 0 && !filters.side.includes(timer.status))
+        return false;
+      if (
+        filters.state.length > 0 &&
+        !filters.state.includes(stateBucket(timer.state))
+      )
+        return false;
+      if (filters.major && !MAJOR_STRUCTURES.includes(timer.structure))
+        return false;
+      if (
+        filters.regions.length > 0 &&
+        !filters.regions.includes(timer.region || 'Unknown')
+      )
+        return false;
       if (filters.hiddenStructures.includes(timer.structure)) return false;
       return true;
     });
@@ -554,7 +658,9 @@ export const useTimerboard = defineStore('timerboard', () => {
       groups[key].push(timer);
     }
     Object.values(groups).forEach((timersInDay) => {
-      timersInDay.sort((a, b) => timerDateTime(a).getTime() - timerDateTime(b).getTime());
+      timersInDay.sort(
+        (a, b) => timerDateTime(a).getTime() - timerDateTime(b).getTime(),
+      );
     });
     return groups;
   });
@@ -566,14 +672,20 @@ export const useTimerboard = defineStore('timerboard', () => {
 
   const stats = computed<TimerStats>(() => ({
     total: timers.value.length,
-    friendly: timers.value.filter((timer) => timer.status === 'Friendly').length,
+    friendly: timers.value.filter((timer) => timer.status === 'Friendly')
+      .length,
     hostile: timers.value.filter((timer) => timer.status === 'Hostile').length,
-    major: timers.value.filter((timer) => MAJOR_STRUCTURES.includes(timer.structure)).length,
-    armor: timers.value.filter((timer) => timer.state.toLowerCase() === 'armor').length,
+    major: timers.value.filter((timer) =>
+      MAJOR_STRUCTURES.includes(timer.structure),
+    ).length,
+    armor: timers.value.filter((timer) => timer.state.toLowerCase() === 'armor')
+      .length,
   }));
 
   const regionOptions = computed(() => {
-    const unique = Array.from(new Set(timers.value.map((timer) => timer.region || 'Unknown')));
+    const unique = Array.from(
+      new Set(timers.value.map((timer) => timer.region || 'Unknown')),
+    );
     return unique.sort((a, b) => a.localeCompare(b));
   });
 
@@ -581,15 +693,21 @@ export const useTimerboard = defineStore('timerboard', () => {
   const lastFetchMs = ref<number>(0);
 
   const structureOptions = computed(() => {
-    const unique = Array.from(new Set(timers.value.map((timer) => timer.structure)));
+    const unique = Array.from(
+      new Set(timers.value.map((timer) => timer.structure)),
+    );
     return unique.sort((a, b) => a.localeCompare(b));
   });
 
   const timeline = computed(() => {
     const progressPercent = localDayProgressPercent(now.value);
 
-    const todaysTimers = timers.value.filter((timer) => localDateKey(timer) === today.value);
-    const elapsed = todaysTimers.filter((timer) => timerDateTime(timer).getTime() <= now.value.getTime()).length;
+    const todaysTimers = timers.value.filter(
+      (timer) => localDateKey(timer) === today.value,
+    );
+    const elapsed = todaysTimers.filter(
+      (timer) => timerDateTime(timer).getTime() <= now.value.getTime(),
+    ).length;
 
     const markers = todaysTimers.map((timer) => {
       const target = timerDateTime(timer);
@@ -611,7 +729,9 @@ export const useTimerboard = defineStore('timerboard', () => {
         structure: timer.structure,
         state: timer.state,
         region: timer.region || 'Unknown',
-        countdown: countdown(timerDateTime(timer).getTime() - now.value.getTime()),
+        countdown: countdown(
+          timerDateTime(timer).getTime() - now.value.getTime(),
+        ),
       };
     });
 
@@ -626,7 +746,9 @@ export const useTimerboard = defineStore('timerboard', () => {
 
   function collapseToggle(date: string) {
     if (collapsedDates.value.includes(date)) {
-      collapsedDates.value = collapsedDates.value.filter((item) => item !== date);
+      collapsedDates.value = collapsedDates.value.filter(
+        (item) => item !== date,
+      );
     } else {
       collapsedDates.value.push(date);
     }
@@ -652,7 +774,11 @@ export const useTimerboard = defineStore('timerboard', () => {
     timers.value = loadTimers();
     void fetchRemoteSnapshot();
     // Prefer SSE when a URL is provided and the browser supports EventSource
-    if (TIMER_SSE_URL && typeof window !== 'undefined' && typeof window.EventSource !== 'undefined') {
+    if (
+      TIMER_SSE_URL &&
+      typeof window !== 'undefined' &&
+      typeof window.EventSource !== 'undefined'
+    ) {
       connectTimerStream();
     } else {
       // No SSE configured or not supported — poll the API periodically

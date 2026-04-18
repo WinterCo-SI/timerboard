@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useTranslation } from 'i18next-vue';
 import { formatLocalDayLabel } from '../utils/timer-utils';
 
 defineProps<{
@@ -12,11 +13,17 @@ const emit = defineEmits<{
   expandAll: [];
   collapseAll: [];
 }>();
+
+const { t } = useTranslation();
+
+void formatLocalDayLabel;
+void emit;
+void t;
 </script>
 
 <template>
   <div class="day-nav">
-    <span class="filter-label">Days:</span>
+    <span class="filter-label">{{ t('days.label') }}</span>
     <button
       v-for="day in days"
       :key="day"
@@ -27,8 +34,8 @@ const emit = defineEmits<{
       {{ formatLocalDayLabel(day, new Date(nowMs), false) }}
     </button>
     <div class="day-nav-sep">
-      <button class="tool-btn" @click="emit('expandAll')">Expand all</button>
-      <button class="tool-btn" @click="emit('collapseAll')">Collapse all</button>
+      <button class="tool-btn" @click="emit('expandAll')">{{ t('days.expandAll') }}</button>
+      <button class="tool-btn" @click="emit('collapseAll')">{{ t('days.collapseAll') }}</button>
     </div>
   </div>
 </template>

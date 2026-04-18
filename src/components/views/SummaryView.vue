@@ -1,5 +1,12 @@
 <script setup lang="ts">
+import { useTranslation } from 'i18next-vue';
 import { computed } from 'vue';
+import {
+  translateRegion,
+  translateState,
+  translateStructure,
+  translateSystem,
+} from '../../i18n';
 import type { Timer } from '../../types/timer';
 import {
   countdown,
@@ -18,6 +25,8 @@ const props = defineProps<{
   nowMs: number;
 }>();
 
+const { t } = useTranslation();
+
 interface SummaryRow {
   date: string;
   region: string;
@@ -27,14 +36,26 @@ interface SummaryRow {
 
 type SideClass = 'hostile' | 'friendly' | 'mixed';
 
-const SUMMARY_CORE_STRUCTURES = new Set(['Keepstar', 'Sotiyo', 'Fortizar', 'IHub', 'TCU', 'Skyhook', 'Orbital Skyhook']);
+const SUMMARY_CORE_STRUCTURES = new Set([
+  'Keepstar',
+  'Sotiyo',
+  'Fortizar',
+  'IHub',
+  'TCU',
+  'Skyhook',
+  'Orbital Skyhook',
+]);
 
 function blockLabel(start: number): string {
   return localBlockLabel(start);
 }
 
-function plural(count: number, singular: string, customPlural?: string): string {
-  return `${count} ${count === 1 ? singular : (customPlural ?? `${singular}s`)}`;
+function summaryPlural(
+  count: number,
+  singularKey: string,
+  pluralKey: string,
+): string {
+  return `${count} ${t(count === 1 ? singularKey : pluralKey)}`;
 }
 
 function isSummaryCoreTimer(timer: Timer): boolean {
@@ -45,7 +66,10 @@ function timerSummaryKey(timer: Timer): string {
   return `${localDateKey(timer)}|${localBlockStart(timer)}|${timer.region || 'Unknown'}`;
 }
 
-function countBy(timers: Timer[], field: 'structure' | 'state'): Record<string, number> {
+function countBy(
+  timers: Timer[],
+  field: 'structure' | 'state',
+): Record<string, number> {
   const out: Record<string, number> = {};
   for (const timer of timers) {
     const key = timer[field] || 'Unknown';
@@ -54,7 +78,10 @@ function countBy(timers: Timer[], field: 'structure' | 'state'): Record<string, 
   return out;
 }
 
-function sortedCounts(timers: Timer[], field: 'structure' | 'state'): Array<{ name: string; count: number }> {
+function sortedCounts(
+  timers: Timer[],
+  field: 'structure' | 'state',
+): Array<{ name: string; count: number }> {
   const counts = countBy(timers, field);
   return Object.entries(counts)
     .map(([name, count]) => ({ name, count }))
@@ -62,11 +89,15 @@ function sortedCounts(timers: Timer[], field: 'structure' | 'state'): Array<{ na
 }
 
 function structuresText(timers: Timer[]): string {
-  return sortedCounts(timers, 'structure').map(({ name, count }) => `${count} ${name}`).join(', ');
+  return sortedCounts(timers, 'structure')
+    .map(({ name, count }) => `${count} ${translateStructure(name)}`)
+    .join(', ');
 }
 
 function statesText(timers: Timer[]): string {
-  return sortedCounts(timers, 'state').map(({ name, count }) => `${count} ${name}`).join(', ');
+  return sortedCounts(timers, 'state')
+    .map(({ name, count }) => `${count} ${translateState(name)}`)
+    .join(', ');
 }
 
 function sideClassFor(timers: Timer[]): SideClass {
@@ -78,18 +109,25 @@ function sideClassFor(timers: Timer[]): SideClass {
 
 function uniqueSystemsText(timers: Timer[]): string {
   const systems = Array.from(new Set(timers.map((timer) => timer.system)));
-  const head = systems.slice(0, 8).join(', ');
+  const head = systems
+    .slice(0, 8)
+    .map((system) => translateSystem(system))
+    .join(', ');
   const extra = Math.max(0, systems.length - 8);
-  return `${head}${extra ? `, +${extra} more` : ''}`;
+  return `${head}${extra ? `, ${t('summary.more', { count: extra })}` : ''}`;
 }
 
 function firstMs(timers: Timer[]): number {
-  const sorted = [...timers].sort((a, b) => timerDateTime(a).getTime() - timerDateTime(b).getTime());
+  const sorted = [...timers].sort(
+    (a, b) => timerDateTime(a).getTime() - timerDateTime(b).getTime(),
+  );
   return timerDateTime(sorted[0]!).getTime();
 }
 
 const rows = computed<SummaryRow[]>(() => {
-  const upcoming = props.timers.filter((timer) => timerDateTime(timer).getTime() > props.nowMs);
+  const upcoming = props.timers.filter(
+    (timer) => timerDateTime(timer).getTime() > props.nowMs,
+  );
   const clusters: Record<string, Timer[]> = {};
   for (const timer of upcoming) {
     const key = timerSummaryKey(timer);
@@ -119,15 +157,19 @@ const rows = computed<SummaryRow[]>(() => {
   return Object.values(rowsByKey).sort((a, b) => {
     const ah = a.timers.filter((timer) => timer.status === 'Hostile').length;
     const bh = b.timers.filter((timer) => timer.status === 'Hostile').length;
-    return a.date.localeCompare(b.date)
-      || a.blockStart - b.blockStart
-      || bh - ah
-      || b.timers.length - a.timers.length
-      || a.region.localeCompare(b.region);
+    return (
+      a.date.localeCompare(b.date) ||
+      a.blockStart - b.blockStart ||
+      bh - ah ||
+      b.timers.length - a.timers.length ||
+      a.region.localeCompare(b.region)
+    );
   });
 });
 
-const dayKeys = computed(() => Array.from(new Set(rows.value.map((row) => row.date))).sort());
+const dayKeys = computed(() =>
+  Array.from(new Set(rows.value.map((row) => row.date))).sort(),
+);
 const today = computed(() => localTodayDate(new Date(props.nowMs)));
 
 const summaryMeta = computed(() => {
@@ -154,23 +196,23 @@ const rowsByDate = computed<Record<string, SummaryRow[]>>(() => {
   <div class="view-summary active-view">
     <div class="summary-head">
       <div>
-        <div class="summary-title">Command summary</div>
-        <div class="summary-subtitle">Upcoming key timers by local time block, region, structure, side, and state.</div>
+        <div class="summary-title">{{ t('summary.title') }}</div>
+        <div class="summary-subtitle">{{ t('summary.subtitle') }}</div>
       </div>
       <div class="summary-meta">
-        <span class="summary-chip">{{ plural(summaryMeta.keyTimers, 'key timer') }}</span>
-        <span class="summary-chip">{{ plural(summaryMeta.blocks, 'time block') }}</span>
-        <span class="summary-chip">{{ plural(summaryMeta.regions, 'region') }}</span>
+        <span class="summary-chip">{{ summaryPlural(summaryMeta.keyTimers, 'summary.keyTimer', 'summary.keyTimers') }}</span>
+        <span class="summary-chip">{{ summaryPlural(summaryMeta.blocks, 'common.timeBlock', 'common.timeBlocks') }}</span>
+        <span class="summary-chip">{{ summaryPlural(summaryMeta.regions, 'common.region', 'common.regions') }}</span>
       </div>
     </div>
 
-    <div v-if="!rows.length" class="summary-empty">No upcoming key timers match the current filters.</div>
+    <div v-if="!rows.length" class="summary-empty">{{ t('summary.empty') }}</div>
 
     <div v-for="date in dayKeys" :key="date" class="summary-day">
       <div class="summary-day-head" :class="{ today: date === today }">
         <span>{{ formatLocalDayLabel(date, new Date(nowMs)) }}</span>
         <span class="summary-day-line" />
-        <span>{{ plural((rowsByDate[date] ?? []).reduce((sum, row) => sum + row.timers.length, 0), 'timer') }}</span>
+        <span>{{ t('table.timerCount', { count: (rowsByDate[date] ?? []).reduce((sum, row) => sum + row.timers.length, 0) }) }}</span>
       </div>
 
       <section
@@ -186,24 +228,24 @@ const rowsByDate = computed<Record<string, SummaryRow[]>>(() => {
         <div class="summary-block-head">
           <div class="summary-window-wrap">
             <div class="summary-window">{{ blockLabel(row.blockStart) }}</div>
-            <div class="summary-kicker">{{ firstMs(row.timers) - nowMs < 6 * 3600 * 1000 ? 'soonest pressure' : 'time block' }}</div>
+            <div class="summary-kicker">{{ firstMs(row.timers) - nowMs < 6 * 3600 * 1000 ? t('summary.soonestPressure') : t('summary.timeBlock') }}</div>
           </div>
           <div>
-            <div class="summary-region">{{ row.region }}</div>
+            <div class="summary-region">{{ translateRegion(row.region) }}</div>
             <div class="summary-region-meta">
-              <span class="summary-priority" :class="sideClassFor(row.timers)">{{ sideClassFor(row.timers) }}</span>
-              <span v-if="row.timers.some((timer) => isVisualMajor(timer))" class="summary-priority major">major</span>
+              <span class="summary-priority" :class="sideClassFor(row.timers)">{{ t(`common.${sideClassFor(row.timers)}`) }}</span>
+              <span v-if="row.timers.some((timer) => isVisualMajor(timer))" class="summary-priority major">{{ t('common.major') }}</span>
               <span v-if="firstMs(row.timers) - nowMs < 2 * 3600 * 1000" class="summary-priority urgent">0-2h</span>
             </div>
           </div>
           <div class="summary-counts">
-            <span class="summary-count">{{ plural(row.timers.length, 'timer') }}</span>
-            <span class="summary-count hostile">{{ row.timers.filter((timer) => timer.status === 'Hostile').length }}H</span>
-            <span class="summary-count friendly">{{ row.timers.filter((timer) => timer.status === 'Friendly').length }}F</span>
+            <span class="summary-count">{{ t('table.timerCount', { count: row.timers.length }) }}</span>
+            <span class="summary-count hostile">{{ t('summary.hostileShort', { count: row.timers.filter((timer) => timer.status === 'Hostile').length }) }}</span>
+            <span class="summary-count friendly">{{ t('summary.friendlyShort', { count: row.timers.filter((timer) => timer.status === 'Friendly').length }) }}</span>
           </div>
         </div>
         <div class="summary-body">
-          <div class="summary-lead">{{ structuresText(row.timers) }} in {{ row.region }}.</div>
+          <div class="summary-lead">{{ t('summary.lead', { structures: structuresText(row.timers), region: translateRegion(row.region) }) }}</div>
           <div class="summary-structure-chips">
             <span
               v-for="item in sortedCounts(row.timers, 'structure')"
@@ -211,14 +253,14 @@ const rowsByDate = computed<Record<string, SummaryRow[]>>(() => {
               class="summary-struct-chip"
               :class="{ major: SUMMARY_CORE_STRUCTURES.has(item.name) && ['Keepstar', 'Sotiyo', 'Fortizar'].includes(item.name) }"
             >
-              {{ item.count }} {{ item.name }}
+              {{ item.count }} {{ translateStructure(item.name) }}
             </span>
           </div>
           <div class="summary-detail">
-            <span>Systems: <span class="summary-systems">{{ uniqueSystemsText(row.timers) || '--' }}</span></span>
-            <span>States: {{ statesText(row.timers) || '--' }}</span>
+            <span>{{ t('summary.systems') }} <span class="summary-systems">{{ uniqueSystemsText(row.timers) || '--' }}</span></span>
+            <span>{{ t('summary.states') }} {{ statesText(row.timers) || '--' }}</span>
             <span>
-              First:
+              {{ t('summary.first') }}
               <span class="summary-eta countdown" :class="countdownClass(firstMs(row.timers) - nowMs)">
                 {{ countdown(firstMs(row.timers) - nowMs) }}
               </span>

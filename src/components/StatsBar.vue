@@ -1,30 +1,35 @@
 <script setup lang="ts">
+import { useTranslation } from 'i18next-vue';
 import type { TimerStats } from '../types/timer';
 
 defineProps<{ stats: TimerStats }>();
+
+const { t } = useTranslation();
+
+void t;
 </script>
 
 <template>
   <div class="stats-bar">
     <div class="stat-chip">
       <div class="stat-value">{{ stats.total }}</div>
-      <div class="stat-label">Total</div>
+      <div class="stat-label">{{ t('stats.total') }}</div>
     </div>
     <div class="stat-chip s-ours">
       <div class="stat-value">{{ stats.friendly }}</div>
-      <div class="stat-label">Friendly</div>
+      <div class="stat-label">{{ t('stats.friendly') }}</div>
     </div>
     <div class="stat-chip s-theirs">
       <div class="stat-value">{{ stats.hostile }}</div>
-      <div class="stat-label">Hostile</div>
+      <div class="stat-label">{{ t('stats.hostile') }}</div>
     </div>
     <div class="stat-chip s-major">
       <div class="stat-value">{{ stats.major }}</div>
-      <div class="stat-label">Major</div>
+      <div class="stat-label">{{ t('stats.major') }}</div>
     </div>
     <div class="stat-chip s-major">
       <div class="stat-value">{{ stats.armor }}</div>
-      <div class="stat-label">In Armor</div>
+      <div class="stat-label">{{ t('stats.inArmor') }}</div>
     </div>
   </div>
 </template>

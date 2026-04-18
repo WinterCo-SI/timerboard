@@ -1,10 +1,18 @@
 <script setup lang="ts">
+import { useTranslation } from 'i18next-vue';
 import { computed } from 'vue';
+import {
+  translateRegion,
+  translateState,
+  translateStatus,
+  translateStructure,
+  translateSystem,
+} from '../../i18n';
 import type { Timer } from '../../types/timer';
 import {
   countdown,
   countdownClass,
-  eveTimeContext,
+  eveTimeLabel,
   formatLocalDayLabel,
   isVisualMajor,
   localTimeLabel,
@@ -27,6 +35,7 @@ const emit = defineEmits<{
 }>();
 
 const collapsed = computed(() => new Set(props.collapsedDates));
+const { t } = useTranslation();
 
 function structureClass(structure: string): string {
   if (structure === 'Keepstar') return 'keepstar';
@@ -43,7 +52,7 @@ function structureClass(structure: string): string {
         <span class="date-chevron">▾</span>
         <div class="date-label" :class="{ today: date === today }">{{ formatLocalDayLabel(date, new Date(nowMs)) }}</div>
         <div class="date-line" />
-        <div class="date-count">{{ groups[date]?.length ?? 0 }} timers</div>
+        <div class="date-count">{{ t('table.timerCount', { count: groups[date]?.length ?? 0 }) }}</div>
       </header>
 
       <div class="date-body">
@@ -51,13 +60,13 @@ function structureClass(structure: string): string {
           <thead>
             <tr>
               <th />
-              <th>Time</th>
-              <th>Region</th>
-              <th>System</th>
-              <th class="col-name">Name</th>
-              <th>Structure</th>
-              <th>State</th>
-              <th>Owner</th>
+              <th>{{ t('table.columns.time') }}</th>
+              <th>{{ t('table.columns.region') }}</th>
+              <th>{{ t('table.columns.system') }}</th>
+              <th class="col-name">{{ t('table.columns.name') }}</th>
+              <th>{{ t('table.columns.structure') }}</th>
+              <th>{{ t('table.columns.state') }}</th>
+              <th>{{ t('table.columns.owner') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -70,30 +79,30 @@ function structureClass(structure: string): string {
               ]"
             >
               <td style="width: 22px; text-align: center"><span class="major-star">{{ isVisualMajor(timer) ? '★' : '' }}</span></td>
-              <td style="width: 140px">
+              <td style="width: 185px">
                 <div class="cell-time-row" style="display:flex;gap:8px;align-items:center;">
                   <div class="cell-time">{{ localTimeLabel(timer) }}</div>
                   <div class="local-time">{{ localTimeZoneLabel(timer) }}</div>
+                  <div class="eve-time">{{ eveTimeLabel(timer) }} EVE</div>
                 </div>
-                <div class="eve-time">{{ eveTimeContext(timer) }}</div>
                 <div class="countdown" :class="countdownClass(timerDateTime(timer).getTime() - nowMs)">
-                  {{ timerDateTime(timer).getTime() <= nowMs ? 'elapsed' : countdown(timerDateTime(timer).getTime() - nowMs) }}
+                  {{ timerDateTime(timer).getTime() <= nowMs ? '' : countdown(timerDateTime(timer).getTime() - nowMs) }}
                 </div>
               </td>
-              <td style="width: 100px" class="cell-system">{{ timer.region || '--' }}</td>
-              <td style="width: 100px"><span class="cell-system">{{ timer.system }}</span></td>
+              <td style="width: 100px" class="cell-system">{{ translateRegion(timer.region) }}</td>
+              <td style="width: 100px"><span class="cell-system">{{ translateSystem(timer.system) }}</span></td>
               <td class="col-name"><span class="cell-name" :title="timer.name">{{ timer.name || '--' }}</span></td>
               <td>
-                  <span class="struct-badge" :class="structureClass(timer.structure)">{{ timer.structure }}</span>
+                  <span class="struct-badge" :class="structureClass(timer.structure)">{{ translateStructure(timer.structure) }}</span>
               </td>
-              <td><span class="state-badge" :class="stateKey(timer.state)">{{ timer.state }}</span></td>
+              <td><span class="state-badge" :class="stateKey(timer.state)">{{ translateState(timer.state) }}</span></td>
               <td>
                 <span
                   class="status-dot"
                   :class="timer.status === 'Friendly' ? 'ours' : 'theirs'"
-                  :title="timer.owner ? `${timer.status} — ${timer.owner}` : timer.status"
+                  :title="timer.owner ? `${translateStatus(timer.status)} - ${timer.owner}` : translateStatus(timer.status)"
                 >
-                  {{ timer.status === 'Friendly' ? 'Ours' : 'Theirs' }}
+                  {{ timer.status === 'Friendly' ? t('common.ours') : t('common.theirs') }}
                   <span v-if="timer.owner"> ({{ timer.owner }})</span>
                 </span>
               </td>
@@ -278,7 +287,6 @@ tr.elapsed .cell-time {
   color: var(--text-3);
   font-family: var(--font-mono);
   font-size: 11px;
-  margin-top: 1px;
   white-space: nowrap;
 }
 

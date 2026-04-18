@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import type { FilterState } from '../types/timer';
+import { useTranslation } from 'i18next-vue';
 
 import { ref } from 'vue';
+import {
+  translateRegion,
+  translateState,
+  translateStatus,
+  translateStructure,
+} from '../i18n';
+import type { FilterState } from '../types/timer';
 
 const SIDE_OPTIONS = ['Friendly', 'Hostile'] as const;
 const STATE_OPTIONS = ['Hull', 'Armor', 'Anchoring'] as const;
@@ -22,11 +29,20 @@ const emit = defineEmits<{
   setStructureVisibility: [structure: string, visible: boolean];
 }>();
 
+const { t } = useTranslation();
+
 function summarizeSelection(selected: string[], allOptions: readonly string[]) {
-  if (!selected.length) return 'All';
-  if (selected.length === allOptions.length) return 'All';
-  if (selected.length <= 2) return selected.join(', ');
-  return `${selected.length} selected`;
+  if (!selected.length) return t('common.all');
+  if (selected.length === allOptions.length) return t('common.all');
+  if (selected.length <= 2)
+    return selected.map((item) => translateState(item)).join(', ');
+  return t('common.selected', { count: selected.length });
+}
+
+function summarizeSide(selected: string[]) {
+  if (!selected.length) return t('common.all');
+  if (selected.length === SIDE_OPTIONS.length) return t('common.all');
+  return selected.map((item) => translateStatus(item)).join(', ');
 }
 const openGroup = ref<string | null>(null);
 
@@ -37,49 +53,51 @@ function toggleGroup(id: string) {
 
 <template>
   <section class="controls">
-    <span class="filter-label">Filter:</span>
-    <button class="tool-btn filter-reset" :class="{ active: !hasActiveFilters }" @click="emit('resetFilters')">All</button>
-    <button class="tool-btn" :class="{ active: filters.major }" @click="emit('toggleMajor')">Major</button>
+    <span class="filter-label">{{ t('filters.label') }}</span>
+    <button class="tool-btn filter-reset" :class="{ active: !hasActiveFilters }" @click="emit('resetFilters')">{{ t('common.all') }}</button>
+    <button class="tool-btn" :class="{ active: filters.major }" @click="emit('toggleMajor')">{{ t('common.major') }}</button>
 
     <details class="filter-group filter-dropdown" :open="openGroup === 'side'">
       <summary @click.prevent="toggleGroup('side')">
-        Side
-        <span class="filter-count">{{ summarizeSelection(filters.side, SIDE_OPTIONS) }}</span>
+        {{ t('filters.side') }}
+        <span class="filter-count">{{ summarizeSide(filters.side) }}</span>
       </summary>
       <div class="filter-group-body region-list">
         <label v-for="side in SIDE_OPTIONS" :key="side" class="check-item">
           <input :checked="filters.side.includes(side)" type="checkbox" @change="emit('toggleSide', side)" />
-          <span>{{ side }}</span>
+          <span>{{ translateStatus(side) }}</span>
         </label>
       </div>
     </details>
 
     <details class="filter-group filter-dropdown" :open="openGroup === 'state'">
       <summary @click.prevent="toggleGroup('state')">
-        State
+        {{ t('filters.state') }}
         <span class="filter-count">{{ summarizeSelection(filters.state, STATE_OPTIONS) }}</span>
       </summary>
       <div class="filter-group-body region-list">
         <label v-for="state in STATE_OPTIONS" :key="state" class="check-item">
           <input :checked="filters.state.includes(state)" type="checkbox" @change="emit('toggleState', state)" />
-          <span>{{ state }}</span>
+          <span>{{ translateState(state) }}</span>
         </label>
       </div>
     </details>
 
     <details class="filter-group filter-dropdown" :open="openGroup === 'region'">
-      <summary @click.prevent="toggleGroup('region')">Region <span class="filter-count">{{ filters.regions.length || 'All' }}</span></summary>
+      <summary @click.prevent="toggleGroup('region')">
+        {{ t('filters.region') }} <span class="filter-count">{{ filters.regions.length || t('common.all') }}</span>
+      </summary>
       <div class="filter-group-body region-list">
         <label v-for="region in regionOptions" :key="region" class="check-item">
           <input :checked="filters.regions.includes(region)" type="checkbox" @change="emit('toggleRegion', region)" />
-          <span>{{ region }}</span>
+          <span>{{ translateRegion(region) }}</span>
         </label>
       </div>
     </details>
 
     <details class="filter-group filter-dropdown" :open="openGroup === 'structure'">
       <summary @click.prevent="toggleGroup('structure')">
-        Structure
+        {{ t('filters.structure') }}
         <span class="filter-count">{{ structureOptions.length - filters.hiddenStructures.length }}/{{ structureOptions.length }}</span>
       </summary>
       <div class="filter-group-body region-list">
@@ -89,7 +107,7 @@ function toggleGroup(id: string) {
             type="checkbox"
             @change="(event) => emit('setStructureVisibility', structure, (event.target as HTMLInputElement).checked)"
           />
-          <span>{{ structure }}</span>
+          <span>{{ translateStructure(structure) }}</span>
         </label>
       </div>
     </details>

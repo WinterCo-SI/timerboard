@@ -1,4 +1,11 @@
 <script setup lang="ts">
+import { useTranslation } from 'i18next-vue';
+import { computed } from 'vue';
+import {
+  translateStatus,
+  translateStructure,
+  translateSystem,
+} from '../../i18n';
 import type { Timer } from '../../types/timer';
 import {
   eveTimeContext,
@@ -6,11 +13,10 @@ import {
   isVisualMajor,
   localDayProgressPercent,
   localTimeLabel,
-  localTimeZoneLabel,
   localTimelinePercent,
+  localTimeZoneLabel,
   timerDateTime,
 } from '../../utils/timer-utils';
-import { computed } from 'vue';
 
 const props = defineProps<{
   groups: Record<string, Timer[]>;
@@ -19,11 +25,15 @@ const props = defineProps<{
   nowMs: number;
 }>();
 
+const { t } = useTranslation();
+
 const ownersByDate = computed(() => {
   const map: Record<string, string[]> = {};
   for (const date of props.dates) {
     const timers = props.groups[date] || [];
-    const owners = Array.from(new Set(timers.map(t => (t as any).owner).filter(Boolean)));
+    const owners = Array.from(
+      new Set(timers.map((t) => (t as any).owner).filter(Boolean)),
+    );
     if (owners.length) map[date] = owners;
   }
   return map;
@@ -46,16 +56,16 @@ function leftForTimer(timer: Timer): number {
 <template>
   <div class="view-gantt active-view">
     <div class="tl-legend">
-      <span class="tl-legend-item"><span class="tl-legend-swatch ours" /> Friendly</span>
-      <span class="tl-legend-item"><span class="tl-legend-swatch theirs" /> Hostile</span>
-      <span class="tl-legend-item"><span class="tl-legend-swatch major" /> ★ Major</span>
-      <span class="tl-legend-hint">Scroll for full day</span>
+      <span class="tl-legend-item"><span class="tl-legend-swatch ours" /> {{ t('common.friendly') }}</span>
+      <span class="tl-legend-item"><span class="tl-legend-swatch theirs" /> {{ t('common.hostile') }}</span>
+      <span class="tl-legend-item"><span class="tl-legend-swatch major" /> ★ {{ t('common.major') }}</span>
+      <span class="tl-legend-hint">{{ t('gantt.scrollHint') }}</span>
     </div>
 
     <section v-for="date in dates" :key="date" class="tl-section">
       <div class="tl-section-header" :class="{ today: date === today }">
         {{ formatLocalDayLabel(date, new Date(nowMs)) }}
-        <span class="dsh-count">{{ groups[date]?.length ?? 0 }} timer{{ (groups[date]?.length ?? 0) === 1 ? '' : 's' }}</span>
+        <span class="dsh-count">{{ t('table.timerCount', { count: groups[date]?.length ?? 0 }) }}</span>
         <template v-if="ownersByDate[date] && ownersByDate[date].length">
           <span class="dsh-owners"> — {{ ownersByDate[date].join(', ') }}</span>
         </template>
@@ -105,10 +115,10 @@ function leftForTimer(timer: Timer): number {
                 class="tl-pill"
                 :class="{ major: isVisualMajor(timer), ours: timer.status === 'Friendly', theirs: timer.status === 'Hostile' }"
                 :style="{ left: `${leftForTimer(timer)}px` }"
-                :title="`${localTimeLabel(timer)} ${localTimeZoneLabel(timer)} - ${eveTimeContext(timer)} - ${timer.system} - ${timer.name} (${timer.structure})`"
+                :title="`${localTimeLabel(timer)} ${localTimeZoneLabel(timer)} - ${eveTimeContext(timer)} - ${translateSystem(timer.system)} - ${timer.name} (${translateStructure(timer.structure)}) - ${translateStatus(timer.status)}`"
               >
                 <span class="tl-pill-text">
-                  {{ isVisualMajor(timer) ? 'Major ' : '' }}{{ localTimeLabel(timer) }} {{ localTimeZoneLabel(timer) }} - {{ timer.system }} - {{ timer.name }} - {{ eveTimeContext(timer) }}
+                  {{ isVisualMajor(timer) ? `${t('common.major')} ` : '' }}{{ localTimeLabel(timer) }} {{ localTimeZoneLabel(timer) }} - {{ translateSystem(timer.system) }} - {{ timer.name }} - {{ eveTimeContext(timer) }}
                   <template v-if="(timer as any).owner"> ({{ (timer as any).owner }})</template>
                 </span>
               </div>

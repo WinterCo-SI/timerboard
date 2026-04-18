@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { useTranslation } from 'i18next-vue';
 import { computed, reactive, ref } from 'vue';
 import { useTimerboard } from '../composables/useTimerboard';
+import { translateStructure, translateSystem } from '../i18n';
 
 const props = defineProps<{
   progressPercent: number;
@@ -30,6 +32,7 @@ const props = defineProps<{
 
 const tooltipEl = ref<HTMLElement | null>(null);
 const store = useTimerboard();
+const { t } = useTranslation();
 
 const tooltip = reactive({
   visible: false,
@@ -43,13 +46,17 @@ const tooltip = reactive({
 });
 
 const markerStructureTooltip = computed(() => {
-  const marker = props.markers.find((item) => item.targetMs === tooltip.targetMs);
-  return marker ? `${marker.structure} - ${marker.eveTimeLabel}` : '';
+  const marker = props.markers.find(
+    (item) => item.targetMs === tooltip.targetMs,
+  );
+  return marker
+    ? `${translateStructure(marker.structure)} - ${marker.eveTimeLabel}`
+    : '';
 });
 
 function computeEtaFromTarget(targetMs: number, nowMs: number) {
   const ms = targetMs - nowMs;
-  if (ms <= 0) return 'elapsed';
+  if (ms <= 0) return '';
   const totalMinutes = Math.max(1, Math.round(ms / 60000));
   const days = Math.floor(totalMinutes / 1440);
   const hours = Math.floor((totalMinutes % 1440) / 60);
@@ -59,7 +66,9 @@ function computeEtaFromTarget(targetMs: number, nowMs: number) {
   return `${minutes}m`;
 }
 
-const tooltipEta = computed(() => computeEtaFromTarget(tooltip.targetMs, store.nowMs));
+const tooltipEta = computed(() =>
+  computeEtaFromTarget(tooltip.targetMs, store.nowMs),
+);
 
 const ticks = computed(() => {
   return Array.from({ length: 11 }, (_, index) => {
@@ -73,11 +82,12 @@ const ticks = computed(() => {
 });
 
 function markerStyle(marker: (typeof props.markers)[number]) {
-  const background = marker.status === 'Hostile'
-    ? 'var(--red)'
-    : marker.elapsed
-      ? 'var(--text-3)'
-      : 'var(--green)';
+  const background =
+    marker.status === 'Hostile'
+      ? 'var(--red)'
+      : marker.elapsed
+        ? 'var(--text-3)'
+        : 'var(--green)';
 
   return {
     left: `${marker.leftPercent}%`,
@@ -103,9 +113,12 @@ function positionTooltip(clientX: number, clientY: number) {
   tooltip.y = Math.max(8, Math.min(maxY, y));
 }
 
-function showMarkerTooltip(marker: (typeof props.markers)[number], event: MouseEvent) {
-  tooltip.title = `${marker.localTimeLabel} ${marker.localTimeZoneLabel} - ${marker.system}`;
-  tooltip.subtitle = marker.name || marker.system;
+function showMarkerTooltip(
+  marker: (typeof props.markers)[number],
+  event: MouseEvent,
+) {
+  tooltip.title = `${marker.localTimeLabel} ${marker.localTimeZoneLabel} - ${translateSystem(marker.system)}`;
+  tooltip.subtitle = marker.name || translateSystem(marker.system);
   tooltip.status = marker.status;
   tooltip.targetMs = marker.targetMs;
   tooltip.visible = true;
@@ -146,7 +159,7 @@ function hideMarkerTooltip() {
     </div>
     <div class="timeline-meta">
       <span>00:00</span>
-      <span class="timeline-elapsed-count">{{ total ? `Today: ${elapsed}/${total} elapsed` : '' }}</span>
+      <span class="timeline-elapsed-count">{{ total ? t('timeline.todayElapsed', { elapsed, total }) : '' }}</span>
       <span>23:59</span>
     </div>
 

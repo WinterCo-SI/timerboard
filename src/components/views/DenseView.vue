@@ -1,4 +1,11 @@
 <script setup lang="ts">
+import { useTranslation } from 'i18next-vue';
+import {
+  translateState,
+  translateStatus,
+  translateStructure,
+  translateSystem,
+} from '../../i18n';
 import type { Timer } from '../../types/timer';
 import {
   countdown,
@@ -18,6 +25,23 @@ defineProps<{
   today: string;
   nowMs: number;
 }>();
+
+const { t } = useTranslation();
+
+void countdown;
+void countdownClass;
+void formatLocalDayLabel;
+void isVisualMajor;
+void localTimeLabel;
+void localTimeOfDayClass;
+void localTimeZoneLabel;
+void stateKey;
+void timerDateTime;
+void t;
+void translateState;
+void translateStatus;
+void translateStructure;
+void translateSystem;
 </script>
 
 <template>
@@ -25,7 +49,7 @@ defineProps<{
     <section v-for="date in dates" :key="date" class="dense-day">
       <div class="dense-section-header" :class="{ today: date === today }">
         <span>{{ formatLocalDayLabel(date, new Date(nowMs)) }}</span>
-        <span class="dsh-count">{{ groups[date]?.length ?? 0 }} timers</span>
+        <span class="dsh-count">{{ t('table.timerCount', { count: groups[date]?.length ?? 0 }) }}</span>
       </div>
       <div class="dense-grid">
         <article
@@ -36,31 +60,31 @@ defineProps<{
             localTimeOfDayClass(timer),
             { major: isVisualMajor(timer), hostile: timer.status === 'Hostile', elapsed: timerDateTime(timer).getTime() <= nowMs },
           ]"
-          :title="`${timer.system} · ${timer.name}\n${timer.structure} · ${timer.state}`"
+          :title="`${translateSystem(timer.system)} - ${timer.name}\n${translateStructure(timer.structure)} - ${translateState(timer.state)}`"
         >
           <div class="dense-card-top">
             <div class="dense-card-prime">
               <span class="dense-time">{{ localTimeLabel(timer) }} {{ localTimeZoneLabel(timer) }}</span>
-              <span class="dense-system">{{ timer.system }}</span>
+              <span class="dense-system">{{ translateSystem(timer.system) }}</span>
             </div>
             <div class="dense-card-side">
               <span class="dense-star">{{ isVisualMajor(timer) ? '★' : '' }}</span>
               <span
                 class="dense-owner"
                 :class="timer.status === 'Friendly' ? 'ours' : 'theirs'"
-                :title="timer.owner ? `Owner: ${timer.owner}` : (timer.status || '')"
+                :title="timer.owner ? `${t('table.columns.owner')}: ${timer.owner}` : translateStatus(timer.status)"
               >
               </span>
               <span class="dense-cd" :class="countdownClass(timerDateTime(timer).getTime() - nowMs)">
-                {{ timerDateTime(timer).getTime() <= nowMs ? 'elapsed' : countdown(timerDateTime(timer).getTime() - nowMs) }}
+                {{ timerDateTime(timer).getTime() <= nowMs ? '' : countdown(timerDateTime(timer).getTime() - nowMs) }}
               </span>
             </div>
           </div>
 
           <div class="dense-card-main">
             <div class="dense-badges">
-              <span class="dense-struct">{{ timer.structure }}</span>
-              <span class="dense-state" :class="stateKey(timer.state)">{{ timer.state }}</span>
+              <span class="dense-struct">{{ translateStructure(timer.structure) }}</span>
+              <span class="dense-state" :class="stateKey(timer.state)">{{ translateState(timer.state) }}</span>
             </div>
             <div class="dense-name">{{ timer.name }}</div>
           </div>

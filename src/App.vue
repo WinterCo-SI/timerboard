@@ -1,13 +1,15 @@
 <script setup lang="ts">
+import { useTranslation } from 'i18next-vue';
 import { onMounted, onUnmounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import ActiveFilterChips from './components/ActiveFilterChips.vue';
 import AppHeader from './components/AppHeader.vue';
 import AuthNotice from './components/AuthNotice.vue';
-import ActiveFilterChips from './components/ActiveFilterChips.vue';
 import DayNav from './components/DayNav.vue';
 import FilterBar from './components/FilterBar.vue';
+import ImportModal from './components/modals/ImportModal.vue';
 import StatsBar from './components/StatsBar.vue';
 import TimelineBar from './components/TimelineBar.vue';
-import ImportModal from './components/modals/ImportModal.vue';
 import DenseView from './components/views/DenseView.vue';
 import GanttView from './components/views/GanttView.vue';
 import MapView from './components/views/MapView.vue';
@@ -15,11 +17,11 @@ import SummaryView from './components/views/SummaryView.vue';
 import TableView from './components/views/TableView.vue';
 import { useTimerboard } from './composables/useTimerboard';
 import type { TimerView } from './types/timer';
-import { useRoute, useRouter } from 'vue-router';
 
 const store = useTimerboard();
 const route = useRoute();
 const router = useRouter();
+const { t } = useTranslation();
 
 onMounted(() => {
   store.initialize();
@@ -44,7 +46,7 @@ watch(
     if (!name) return;
     const v = name as TimerView;
     if (v !== store.currentView) store.setView(v);
-  }
+  },
 );
 
 function jumpTo(date: string) {
@@ -134,7 +136,7 @@ function jumpTo(date: string) {
       <MapView v-else :now-ms="store.nowMs" :timers="store.filteredTimers" />
     </main>
 
-    <footer class="app-footer">&copy; 2026. Ingame: DTee. All rights reserved.</footer>
+    <footer class="app-footer">{{ t('app.footer') }}</footer>
 
     <ImportModal
       :model-value="store.importText"

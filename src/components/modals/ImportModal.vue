@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { useTranslation } from 'i18next-vue';
+
 const props = defineProps<{
   open: boolean;
   modelValue: string;
   status: string;
 }>();
+
+const { t } = useTranslation();
 
 const emit = defineEmits<{
   close: [];
@@ -17,26 +21,28 @@ const emit = defineEmits<{
 function onInput(event: Event) {
   emit('updateModelValue', (event.target as HTMLTextAreaElement).value);
 }
+
+void props;
+void t;
+void onInput;
 </script>
 
 <template>
   <div v-if="props.open" class="modal-backdrop">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">Paste timers</div>
+        <div class="modal-title">{{ t('import.title') }}</div>
         <button class="tool-btn" title="Close" @click="emit('close')">✕</button>
       </div>
       <div class="modal-body">
-        <div class="modal-help">
-          Paste Discord timer lines (one per line). Use <span class="mono">[Structure][Owner][State]</span> format.
-        </div>
-        <textarea id="importText" :value="props.modelValue" spellcheck="false" placeholder="Paste timers here..." @input="onInput" />
+        <div class="modal-help">{{ t('import.help') }}</div>
+        <textarea id="importText" :value="props.modelValue" spellcheck="false" :placeholder="t('import.placeholder')" @input="onInput" />
         <div class="modal-actions">
-          <button class="tool-btn" @click="emit('import', 'replace')">Import &amp; Replace</button>
-          <button class="tool-btn" @click="emit('import', 'append')">Import &amp; Append</button>
-          <button class="tool-btn" @click="emit('resetTimers')">Reset to seed</button>
-          <button class="tool-btn" @click="emit('clearTimers')">Clear</button>
-          <button class="tool-btn" @click="emit('clearLocalData')">Clear saved data</button>
+          <button class="tool-btn" @click="emit('import', 'replace')">{{ t('import.replace') }}</button>
+          <button class="tool-btn" @click="emit('import', 'append')">{{ t('import.append') }}</button>
+          <button class="tool-btn" @click="emit('resetTimers')">{{ t('import.reset') }}</button>
+          <button class="tool-btn" @click="emit('clearTimers')">{{ t('import.clear') }}</button>
+          <button class="tool-btn" @click="emit('clearLocalData')">{{ t('import.clearSaved') }}</button>
         </div>
         <div class="modal-foot">{{ props.status }}</div>
       </div>

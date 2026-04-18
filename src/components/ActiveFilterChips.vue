@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { useTranslation } from 'i18next-vue';
+import { translateState, translateStatus } from '../i18n';
 import type { FilterState } from '../types/timer';
 
 defineProps<{
   filters: FilterState;
 }>();
+
+const { t } = useTranslation();
 
 const emit = defineEmits<{
   clearSide: [];
@@ -12,6 +16,11 @@ const emit = defineEmits<{
   clearRegions: [];
   clearStructures: [];
 }>();
+
+void t;
+void translateState;
+void translateStatus;
+void emit;
 </script>
 
 <template>
@@ -26,24 +35,26 @@ const emit = defineEmits<{
         filters.hiddenStructures.length > 0,
     }"
   >
-    <span class="active-filter-label">Active filters:</span>
-    <button v-if="filters.side.length" class="filter-chip" title="Clear side filter" @click="emit('clearSide')">
-      {{ filters.side.join(', ') }}
+    <span class="active-filter-label">{{ t('filters.active') }}</span>
+    <button v-if="filters.side.length" class="filter-chip" :title="t('filters.clearSide')" @click="emit('clearSide')">
+      {{ filters.side.map((side) => translateStatus(side)).join(', ') }}
     </button>
-    <button v-if="filters.state.length" class="filter-chip" title="Clear state filter" @click="emit('clearState')">
-      {{ filters.state.join(', ') }}
+    <button v-if="filters.state.length" class="filter-chip" :title="t('filters.clearState')" @click="emit('clearState')">
+      {{ filters.state.map((state) => translateState(state)).join(', ') }}
     </button>
-    <button v-if="filters.major" class="filter-chip" title="Clear major filter" @click="emit('clearMajor')">Major</button>
-    <button v-if="filters.regions.length" class="filter-chip" title="Clear region filter" @click="emit('clearRegions')">
-      {{ filters.regions.length }} region{{ filters.regions.length === 1 ? '' : 's' }}
+    <button v-if="filters.major" class="filter-chip" :title="t('filters.clearMajor')" @click="emit('clearMajor')">
+      {{ t('common.major') }}
+    </button>
+    <button v-if="filters.regions.length" class="filter-chip" :title="t('filters.clearRegion')" @click="emit('clearRegions')">
+      {{ t('filters.regionCount', { count: filters.regions.length }) }}
     </button>
     <button
       v-if="filters.hiddenStructures.length"
       class="filter-chip"
-      title="Clear structure filter"
+      :title="t('filters.clearStructure')"
       @click="emit('clearStructures')"
     >
-      {{ filters.hiddenStructures.length }} hidden structure{{ filters.hiddenStructures.length === 1 ? '' : 's' }}
+      {{ t('filters.hiddenStructureCount', { count: filters.hiddenStructures.length }) }}
     </button>
   </div>
 </template>

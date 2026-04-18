@@ -1,0 +1,161 @@
+{
+  "app": {
+    "title": "WinterCo. 计时器板",
+    "footer": "© 2026。游戏内：DTee。保留所有权利。"
+  },
+  "header": {
+    "backToTable": "返回表格视图",
+    "eveTime": "EVE 时间",
+    "navLabel": "计时器视图",
+    "refresh": "刷新（{{time}}）",
+    "pasteTimers": "粘贴计时器",
+    "pasteTimersTitle": "从 Discord 粘贴计时器",
+    "theme": "主题",
+    "language": "语言",
+    "views": {
+      "summary": "摘要",
+      "table": "表格",
+      "dense": "紧凑",
+      "gantt": "时间线",
+      "map": "地图"
+    },
+    "viewTitles": {
+      "summary": "指挥摘要",
+      "table": "表格视图",
+      "dense": "紧凑卡片",
+      "gantt": "时间线视图",
+      "map": "区域压力地图"
+    }
+  },
+  "common": {
+    "all": "全部",
+    "major": "重点",
+    "friendly": "友方",
+    "hostile": "敌方",
+    "mixed": "混合",
+    "ours": "我方",
+    "theirs": "对方",
+    "elapsed": "",
+    "unknown": "未知",
+    "timer": "计时器",
+    "timers": "计时器",
+    "region": "星域",
+    "regions": "星域",
+    "timeBlock": "时间段",
+    "timeBlocks": "时间段",
+    "hiddenStructure": "隐藏建筑",
+    "hiddenStructures": "隐藏建筑",
+    "selected": "已选择 {{count}} 项",
+    "none": "--"
+  },
+  "state": {
+    "Hull": "结构",
+    "Armor": "装甲",
+    "Anchoring": "锚定中",
+    "Final": "最终"
+  },
+  "stats": {
+    "total": "总数",
+    "friendly": "友方",
+    "hostile": "敌方",
+    "major": "重点",
+    "inArmor": "装甲中"
+  },
+  "filters": {
+    "label": "筛选：",
+    "side": "阵营",
+    "state": "状态",
+    "region": "星域",
+    "structure": "建筑",
+    "active": "当前筛选：",
+    "clearSide": "清除阵营筛选",
+    "clearState": "清除状态筛选",
+    "clearMajor": "清除重点筛选",
+    "clearRegion": "清除星域筛选",
+    "clearStructure": "清除建筑筛选",
+    "regionCount": "{{count}} 个星域",
+    "regionCount_plural": "{{count}} 个星域",
+    "hiddenStructureCount": "{{count}} 个隐藏建筑",
+    "hiddenStructureCount_plural": "{{count}} 个隐藏建筑"
+  },
+  "days": {
+    "label": "日期：",
+    "expandAll": "全部展开",
+    "collapseAll": "全部折叠"
+  },
+  "table": {
+    "columns": {
+      "time": "时间",
+      "region": "星域",
+      "system": "星系",
+      "name": "名称",
+      "structure": "建筑",
+      "state": "状态",
+      "owner": "所有者"
+    },
+    "timerCount": "{{count}} 个计时器"
+  },
+  "timeline": {
+    "todayElapsed": "今日：{{elapsed}}/{{total}} 已过期"
+  },
+  "gantt": {
+    "scrollHint": "横向滚动查看整天"
+  },
+  "summary": {
+    "title": "指挥摘要",
+    "subtitle": "按本地时间段、星域、建筑、阵营和状态汇总即将到来的重点计时器。",
+    "empty": "当前筛选下没有即将到来的重点计时器。",
+    "soonestPressure": "最近压力",
+    "timeBlock": "时间段",
+    "systems": "星系：",
+    "states": "状态：",
+    "first": "最早：",
+    "lead": "{{structures}} 位于 {{region}}。",
+    "hostileShort": "{{count}}敌",
+    "friendlyShort": "{{count}}友",
+    "more": "另有 {{count}} 个",
+    "keyTimer": "重点计时器",
+    "keyTimers": "重点计时器"
+  },
+  "map": {
+    "triage": "分诊",
+    "title": "区域压力地图",
+    "subtitle": "按波次着色的星域，以及用于主动分诊的星系下钻。",
+    "empty": "此分诊预设没有即将到来的计时器。",
+    "noActiveTimers": "没有活动计时器",
+    "majorStructures": "Keepstar/Sotiyo/Fortizar",
+    "legendHint": "· 圆圈大小 = 计时器数量 · 深色扇区 = 敌方比例 · 点击星域查看详情",
+    "universe": "宇宙",
+    "nextActions": "下一步行动",
+    "emptyActions": "此分诊预设没有即将到来的计时器。",
+    "timersCount": "{{count}} 个计时器",
+    "timerCount": "{{count}} 个计时器",
+    "hostileFriendlyShort": "{{hostile}}敌 · {{friendly}}友",
+    "systemInRegion": "{{system}} < {{region}}"
+  },
+  "import": {
+    "title": "粘贴计时器",
+    "close": "关闭",
+    "help": "粘贴 Discord 计时器行（每行一个）。使用 [建筑][所有者][状态] 格式。",
+    "placeholder": "在此粘贴计时器...",
+    "replace": "导入并替换",
+    "append": "导入并追加",
+    "reset": "重置为种子数据",
+    "clear": "清空",
+    "clearSaved": "清除已保存数据"
+  },
+  "status": {
+    "api401": "计时器 API 返回 401：需要认证。请刷新并重新认证。",
+    "apiReturned": "计时器 API 返回 {{status}}。正在使用本地计时器。",
+    "apiNoTimers": "计时器 API 未返回计时器（payload keys: {{keys}}）。",
+    "apiTimers": "API 计时器：{{total}}，可用：{{usable}}",
+    "apiFailed": "加载计时器 API 快照失败。正在使用本地计时器。",
+    "liveDisconnected": "实时流已断开。等待重新连接...（如需重新认证请刷新）",
+    "polling": "每 {{seconds}} 秒轮询计时器 API。",
+    "pasteDisabled": "配置已禁用粘贴/导入。",
+    "noTimersParsed": "未解析到计时器。请检查 Discord 行格式。",
+    "noTimersFound": "粘贴文本中没有找到计时器。",
+    "imported": "已导入 {{count}} 个计时器。",
+    "failedLines": " {{count}} 行解析失败。"
+  }
+}

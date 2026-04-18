@@ -1,0 +1,161 @@
+{
+  "app": {
+    "title": "WinterCo. Timerboard",
+    "footer": "© 2026. Ingame: DTee. All rights reserved."
+  },
+  "header": {
+    "backToTable": "Back to table view",
+    "eveTime": "EVE Time",
+    "navLabel": "Timerboard views",
+    "refresh": "Refresh ({{time}})",
+    "pasteTimers": "Paste timers",
+    "pasteTimersTitle": "Paste timers from Discord",
+    "theme": "Theme",
+    "language": "Language",
+    "views": {
+      "summary": "Summary",
+      "table": "Table",
+      "dense": "Dense",
+      "gantt": "Timeline",
+      "map": "Map"
+    },
+    "viewTitles": {
+      "summary": "Command summary",
+      "table": "Table view",
+      "dense": "Dense cards",
+      "gantt": "Timeline view",
+      "map": "Regional pressure map"
+    }
+  },
+  "common": {
+    "all": "All",
+    "major": "Major",
+    "friendly": "Friendly",
+    "hostile": "Hostile",
+    "mixed": "Mixed",
+    "ours": "Ours",
+    "theirs": "Theirs",
+    "elapsed": "elapsed",
+    "unknown": "Unknown",
+    "timer": "timer",
+    "timers": "timers",
+    "region": "region",
+    "regions": "regions",
+    "timeBlock": "time block",
+    "timeBlocks": "time blocks",
+    "hiddenStructure": "hidden structure",
+    "hiddenStructures": "hidden structures",
+    "selected": "{{count}} selected",
+    "none": "--"
+  },
+  "state": {
+    "Hull": "Hull",
+    "Armor": "Armor",
+    "Anchoring": "Anchoring",
+    "Final": "Final"
+  },
+  "stats": {
+    "total": "Total",
+    "friendly": "Friendly",
+    "hostile": "Hostile",
+    "major": "Major",
+    "inArmor": "In Armor"
+  },
+  "filters": {
+    "label": "Filter:",
+    "side": "Side",
+    "state": "State",
+    "region": "Region",
+    "structure": "Structure",
+    "active": "Active filters:",
+    "clearSide": "Clear side filter",
+    "clearState": "Clear state filter",
+    "clearMajor": "Clear major filter",
+    "clearRegion": "Clear region filter",
+    "clearStructure": "Clear structure filter",
+    "regionCount": "{{count}} region",
+    "regionCount_plural": "{{count}} regions",
+    "hiddenStructureCount": "{{count}} hidden structure",
+    "hiddenStructureCount_plural": "{{count}} hidden structures"
+  },
+  "days": {
+    "label": "Days:",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all"
+  },
+  "table": {
+    "columns": {
+      "time": "Time",
+      "region": "Region",
+      "system": "System",
+      "name": "Name",
+      "structure": "Structure",
+      "state": "State",
+      "owner": "Owner"
+    },
+    "timerCount": "{{count}} timers"
+  },
+  "timeline": {
+    "todayElapsed": "Today: {{elapsed}}/{{total}} elapsed"
+  },
+  "gantt": {
+    "scrollHint": "Scroll for full day"
+  },
+  "summary": {
+    "title": "Command summary",
+    "subtitle": "Upcoming key timers by local time block, region, structure, side, and state.",
+    "empty": "No upcoming key timers match the current filters.",
+    "soonestPressure": "soonest pressure",
+    "timeBlock": "time block",
+    "systems": "Systems:",
+    "states": "States:",
+    "first": "First:",
+    "lead": "{{structures}} in {{region}}.",
+    "hostileShort": "{{count}}H",
+    "friendlyShort": "{{count}}F",
+    "more": "+{{count}} more",
+    "keyTimer": "key timer",
+    "keyTimers": "key timers"
+  },
+  "map": {
+    "triage": "Triage",
+    "title": "Regional pressure map",
+    "subtitle": "Wave-colored regions and system drilldown for active triage.",
+    "empty": "No upcoming timers available for this triage preset.",
+    "noActiveTimers": "No active timers",
+    "majorStructures": "Keepstar/Sotiyo/Fortizar",
+    "legendHint": "· Circle size = timer count · Dark wedge = hostile fraction · Click region for detail",
+    "universe": "Universe",
+    "nextActions": "Next actions",
+    "emptyActions": "No upcoming timers for this triage preset.",
+    "timersCount": "{{count}} timers",
+    "timerCount": "{{count}} timer",
+    "hostileFriendlyShort": "{{hostile}}H · {{friendly}}F",
+    "systemInRegion": "{{system}} < {{region}}"
+  },
+  "import": {
+    "title": "Paste timers",
+    "close": "Close",
+    "help": "Paste Discord timer lines (one per line). Use [Structure][Owner][State] format.",
+    "placeholder": "Paste timers here...",
+    "replace": "Import & Replace",
+    "append": "Import & Append",
+    "reset": "Reset to seed",
+    "clear": "Clear",
+    "clearSaved": "Clear saved data"
+  },
+  "status": {
+    "api401": "Timer API returned 401 — authentication required. Please refresh and reauthenticate.",
+    "apiReturned": "Timer API returned {{status}}. Using local timers.",
+    "apiNoTimers": "Timer API returned no timers (payload keys: {{keys}}).",
+    "apiTimers": "API timers: {{total}}, usable: {{usable}}",
+    "apiFailed": "Failed to load timer API snapshot. Using local timers.",
+    "liveDisconnected": "Live stream disconnected. Waiting for reconnect... (refresh to reauthenticate if needed)",
+    "polling": "Polling timer API every {{seconds}}s.",
+    "pasteDisabled": "Paste/import disabled by configuration.",
+    "noTimersParsed": "No timers parsed. Check the expected Discord line format.",
+    "noTimersFound": "No timers found in pasted text.",
+    "imported": "Imported {{count}} timer(s).",
+    "failedLines": " Failed to parse {{count}} line(s)."
+  }
+}
