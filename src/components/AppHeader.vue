@@ -47,11 +47,7 @@ void views;
   <header class="header">
     <div class="header-left">
       <button class="brand-btn" title="Back to table view" @click="emit('setView', 'table')">
-        <svg class="brand-logo" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-          <rect width="64" height="64" rx="12" fill="#111418" />
-          <path d="M12 16h18c13 0 22 7 22 16s-9 16-22 16H12V16zm10 9v14h8c7 0 11-3 11-7s-4-7-11-7h-8z" fill="#3d9e6a" />
-          <path d="M38 16h16v9h-7v23h-9V25h-7v-9h7z" fill="#d4dce8" />
-        </svg>
+        <img src="/favicon.png" class="brand-logo" alt="WInterCo. logo" />
         <span class="brand-copy">
           <span class="title">WinterCo. Timerboard</span>
           <span class="subtitle">EVE Online - All times UTC</span>
@@ -105,7 +101,7 @@ void views;
 }
 
 .header-left {
-  gap: 14px;
+  gap: 2rem;
 }
 
 .header-nav {
