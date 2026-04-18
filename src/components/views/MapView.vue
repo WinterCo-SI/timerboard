@@ -338,13 +338,7 @@ const regionTopology = computed(() => {
     });
   }
 
-  // Keep universe map orientation unchanged. Rotate selected region drilldown 180 degrees for parity request.
-  const rotatedPositions: Record<string, [number, number]> = {};
-  for (const [system, pos] of Object.entries(positions)) {
-    rotatedPositions[system] = [REGION_VIEW_WIDTH - pos[0], REGION_VIEW_HEIGHT - pos[1]];
-  }
-
-  return { region, systems, edges, positions: rotatedPositions };
+  return { region, systems, edges, positions };
 });
 
 function systemTimers(system: string): Timer[] {
