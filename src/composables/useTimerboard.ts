@@ -4,12 +4,18 @@ import { MAJOR_STRUCTURES, RAW_TIMERS, SYSTEM_REGION_LOOKUP } from '../data/time
 import type { FilterState, Timer, TimerStats, TimerView } from '../types/timer';
 import {
   countdown,
+  eveTimeContext,
+  localDateKey,
+  localDayProgressPercent,
+  localTimeLabel,
+  localTimeZoneLabel,
+  localTimelinePercent,
+  localTodayDate,
   parseDiscordTimerLine,
   sanitizeTimerList,
   stateKey,
   timerDateTime,
   toUtcClock,
-  todayUtcDate,
   normalizeTimerState,
   normalizeStructureName,
 } from '../utils/timer-utils';
@@ -543,17 +549,18 @@ export const useTimerboard = defineStore('timerboard', () => {
   const groupedByDate = computed(() => {
     const groups: Record<string, Timer[]> = {};
     for (const timer of filteredTimers.value) {
-      if (!groups[timer.date]) groups[timer.date] = [];
-      groups[timer.date].push(timer);
+      const key = localDateKey(timer);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(timer);
     }
     Object.values(groups).forEach((timersInDay) => {
-      timersInDay.sort((a, b) => a.time.localeCompare(b.time));
+      timersInDay.sort((a, b) => timerDateTime(a).getTime() - timerDateTime(b).getTime());
     });
     return groups;
   });
 
   const dayKeys = computed(() => Object.keys(groupedByDate.value).sort());
-  const today = computed(() => todayUtcDate(now.value));
+  const today = computed(() => localTodayDate(now.value));
   const utcClock = computed(() => toUtcClock(now.value));
   const nowMs = computed(() => now.value.getTime());
 
@@ -579,25 +586,27 @@ export const useTimerboard = defineStore('timerboard', () => {
   });
 
   const timeline = computed(() => {
-    const seconds = now.value.getUTCHours() * 3600 + now.value.getUTCMinutes() * 60 + now.value.getUTCSeconds();
-    const progressPercent = (seconds / 86400) * 100;
+    const progressPercent = localDayProgressPercent(now.value);
 
-    const todaysTimers = timers.value.filter((timer) => timer.date === today.value);
+    const todaysTimers = timers.value.filter((timer) => localDateKey(timer) === today.value);
     const elapsed = todaysTimers.filter((timer) => timerDateTime(timer).getTime() <= now.value.getTime()).length;
 
     const markers = todaysTimers.map((timer) => {
-      const [hours, minutes] = timer.time.split(':').map((value) => Number.parseInt(value, 10));
-      const pct = (((hours * 3600) + (minutes * 60)) / 86400) * 100;
+      const target = timerDateTime(timer);
       const isElapsed = timerDateTime(timer).getTime() <= now.value.getTime();
       return {
         id: `${timer.date}-${timer.time}-${timer.system}-${timer.structure}`,
-        leftPercent: pct,
+        targetMs: target.getTime(),
+        leftPercent: localTimelinePercent(target),
         status: timer.status,
         elapsed: isElapsed,
         major: MAJOR_STRUCTURES.includes(timer.structure),
-        title: `${timer.time} UTC - ${timer.system}`,
+        title: `${localTimeLabel(target)} ${localTimeZoneLabel(target)} - ${timer.system}`,
         name: timer.name,
         time: timer.time,
+        localTimeLabel: localTimeLabel(target),
+        localTimeZoneLabel: localTimeZoneLabel(target),
+        eveTimeLabel: eveTimeContext(target),
         system: timer.system,
         structure: timer.structure,
         state: timer.state,
@@ -610,7 +619,7 @@ export const useTimerboard = defineStore('timerboard', () => {
       progressPercent,
       elapsed,
       total: todaysTimers.length,
-      label: `${String(now.value.getUTCHours()).padStart(2, '0')}:${String(now.value.getUTCMinutes()).padStart(2, '0')}`,
+      label: localTimeLabel(now.value),
       markers,
     };
   });

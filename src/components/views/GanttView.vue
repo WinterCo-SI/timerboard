@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import type { Timer } from '../../types/timer';
-import { formatDate, isVisualMajor, timerDateTime } from '../../utils/timer-utils';
+import {
+  eveTimeContext,
+  formatLocalDayLabel,
+  isVisualMajor,
+  localDayProgressPercent,
+  localTimeLabel,
+  localTimeZoneLabel,
+  localTimelinePercent,
+  timerDateTime,
+} from '../../utils/timer-utils';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -25,19 +34,12 @@ const PX_PER_HOUR = 100;
 const TOTAL_WIDTH = HOURS * PX_PER_HOUR;
 const HOUR_LABELS = Array.from({ length: HOURS }, (_, hour) => hour);
 
-function timerSeconds(time: string): number {
-  const [h, m] = time.split(':').map(Number);
-  return ((h ?? 0) * 3600) + ((m ?? 0) * 60);
-}
-
 function elapsedWidthForNow(ms: number): number {
-  const now = new Date(ms);
-  const seconds = now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds();
-  return (seconds / 86400) * TOTAL_WIDTH;
+  return (localDayProgressPercent(new Date(ms)) / 100) * TOTAL_WIDTH;
 }
 
-function leftForTime(time: string): number {
-  return (timerSeconds(time) / 86400) * TOTAL_WIDTH;
+function leftForTimer(timer: Timer): number {
+  return (localTimelinePercent(timer) / 100) * TOTAL_WIDTH;
 }
 </script>
 
@@ -52,7 +54,7 @@ function leftForTime(time: string): number {
 
     <section v-for="date in dates" :key="date" class="tl-section">
       <div class="tl-section-header" :class="{ today: date === today }">
-        {{ date === today ? '▶ Today — ' : '' }}{{ formatDate(date) }}
+        {{ formatLocalDayLabel(date, new Date(nowMs)) }}
         <span class="dsh-count">{{ groups[date]?.length ?? 0 }} timer{{ (groups[date]?.length ?? 0) === 1 ? '' : 's' }}</span>
         <template v-if="ownersByDate[date] && ownersByDate[date].length">
           <span class="dsh-owners"> — {{ ownersByDate[date].join(', ') }}</span>
@@ -81,7 +83,7 @@ function leftForTime(time: string): number {
             class="tl-now-time"
             :style="{ left: `${elapsedWidthForNow(nowMs)}px` }"
           >
-            {{ String(new Date(nowMs).getUTCHours()).padStart(2, '0') }}:{{ String(new Date(nowMs).getUTCMinutes()).padStart(2, '0') }}
+            {{ localTimeLabel(new Date(nowMs)) }}
           </div>
 
           <div class="tl-rows">
@@ -102,11 +104,11 @@ function leftForTime(time: string): number {
               <div
                 class="tl-pill"
                 :class="{ major: isVisualMajor(timer), ours: timer.status === 'Friendly', theirs: timer.status === 'Hostile' }"
-                :style="{ left: `${leftForTime(timer.time)}px` }"
-                :title="`${timer.time} UTC - ${timer.system} - ${timer.name} (${timer.structure})`"
+                :style="{ left: `${leftForTimer(timer)}px` }"
+                :title="`${localTimeLabel(timer)} ${localTimeZoneLabel(timer)} - ${eveTimeContext(timer)} - ${timer.system} - ${timer.name} (${timer.structure})`"
               >
                 <span class="tl-pill-text">
-                  {{ isVisualMajor(timer) ? '★ ' : '' }}{{ timer.system }} - {{ timer.name }} · {{ timer.structure }}
+                  {{ isVisualMajor(timer) ? 'Major ' : '' }}{{ localTimeLabel(timer) }} {{ localTimeZoneLabel(timer) }} - {{ timer.system }} - {{ timer.name }} - {{ eveTimeContext(timer) }}
                   <template v-if="(timer as any).owner"> ({{ (timer as any).owner }})</template>
                 </span>
               </div>

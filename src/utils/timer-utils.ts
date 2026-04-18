@@ -54,6 +54,95 @@ export function formatDate(date: string, withYear = true): string {
   });
 }
 
+export function localDateKeyFromDate(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+export function localDateKey(timer: Pick<Timer, 'date' | 'time'>): string {
+  return localDateKeyFromDate(timerDateTime(timer));
+}
+
+export function localTodayDate(now: Date): string {
+  return localDateKeyFromDate(now);
+}
+
+function localDateFromKey(date: string): Date {
+  const [year, month, day] = date.split('-').map((part) => Number.parseInt(part, 10));
+  return new Date(year || 1970, (month || 1) - 1, day || 1, 12, 0, 0, 0);
+}
+
+export function formatLocalDate(date: string, withYear = true): string {
+  return localDateFromKey(date).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    ...(withYear ? { year: 'numeric' } : {}),
+  });
+}
+
+export function relativeDayLabel(date: string, now: Date): '' | 'Yesterday' | 'Today' | 'Tomorrow' {
+  const target = localDateFromKey(date);
+  const current = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0);
+  const diffDays = Math.round((target.getTime() - current.getTime()) / 86400000);
+  if (diffDays === -1) return 'Yesterday';
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Tomorrow';
+  return '';
+}
+
+export function formatLocalDayLabel(date: string, now: Date, withYear = true): string {
+  const relative = relativeDayLabel(date, now);
+  const formatted = formatLocalDate(date, withYear);
+  return relative ? `${relative} - ${formatted}` : formatted;
+}
+
+export function localTimeLabel(input: Date | Pick<Timer, 'date' | 'time'>): string {
+  const date = input instanceof Date ? input : timerDateTime(input);
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+export function localTimeZoneLabel(input: Date | Pick<Timer, 'date' | 'time'> = new Date()): string {
+  const date = input instanceof Date ? input : timerDateTime(input);
+  const parts = new Intl.DateTimeFormat(undefined, { timeZoneName: 'short' }).formatToParts(date);
+  return parts.find((part) => part.type === 'timeZoneName')?.value ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+export function eveTimeLabel(input: Date | Pick<Timer, 'date' | 'time'>): string {
+  const date = input instanceof Date ? input : timerDateTime(input);
+  return `${pad2(date.getUTCHours())}:${pad2(date.getUTCMinutes())}`;
+}
+
+export function eveTimeContext(input: Date | Pick<Timer, 'date' | 'time'>): string {
+  return `EVE ${eveTimeLabel(input)}`;
+}
+
+export function localDayProgressPercent(date: Date): number {
+  const seconds = date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds();
+  return (seconds / 86400) * 100;
+}
+
+export function localTimelinePercent(input: Date | Pick<Timer, 'date' | 'time'>): number {
+  const date = input instanceof Date ? input : timerDateTime(input);
+  return localDayProgressPercent(date);
+}
+
+export function localBlockStart(input: Date | Pick<Timer, 'date' | 'time'>): number {
+  const date = input instanceof Date ? input : timerDateTime(input);
+  return Math.floor(date.getHours() / 3) * 3;
+}
+
+export function localBlockLabel(start: number): string {
+  return `${pad2(start)}:00-${pad2((start + 3) % 24)}:00`;
+}
+
+export function localTimeOfDayClass(input: Date | Pick<Timer, 'date' | 'time'>): 'morning' | 'afternoon' | 'evening' {
+  const date = input instanceof Date ? input : timerDateTime(input);
+  const hour = date.getHours();
+  if (hour < 12) return 'morning';
+  if (hour < 18) return 'afternoon';
+  return 'evening';
+}
+
 export function stateKey(state: string): 'final' | 'armor' | 'anchor' | 'hull' | '' {
   const value = state.toLowerCase();
   if (value === 'final') return 'final';

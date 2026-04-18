@@ -12,7 +12,7 @@ import {
 } from '../../data/map';
 import { MAJOR_STRUCTURES } from '../../data/timers';
 import type { Timer } from '../../types/timer';
-import { timerDateTime } from '../../utils/timer-utils';
+import { eveTimeContext, localTimeLabel, localTimeZoneLabel, timerDateTime } from '../../utils/timer-utils';
 
 const VISUAL_MAJOR_STRUCTURES = new Set(['Keepstar', 'Sotiyo', 'Fortizar']);
 
@@ -1188,10 +1188,10 @@ watch(universePanBounds, () => {
                 <div style="display:flex;align-items:center;gap:8px;">
                   <span class="status-dot" :class="item.timers[0]?.status === 'Friendly' ? 'ours' : 'theirs'" :title="item.timers[0]?.owner ? `${item.timers[0].status} â€” ${item.timers[0].owner}` : item.timers[0]?.status" />
                   <div class="map-action-time">
-                    {{ item.timers[0]?.time }} Â· {{ tooltipCountdown(item.earliestMs - props.nowMs) }}
+                    {{ item.timers[0] ? `${localTimeLabel(item.timers[0])} ${localTimeZoneLabel(item.timers[0])}` : '' }} · {{ tooltipCountdown(item.earliestMs - props.nowMs) }}
                   </div>
                 </div>
-                <div class="map-action-count">{{ item.timers.length }} timers</div>
+                <div class="map-action-count">{{ item.timers[0] ? eveTimeContext(item.timers[0]) : '' }} · {{ item.timers.length }} timers</div>
               </div>
             </div>
           </div>

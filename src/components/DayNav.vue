@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { formatDate } from '../utils/timer-utils';
+import { formatLocalDayLabel } from '../utils/timer-utils';
 
 defineProps<{
   days: string[];
   today: string;
+  nowMs: number;
 }>();
 
 const emit = defineEmits<{
@@ -23,7 +24,7 @@ const emit = defineEmits<{
       :class="{ 'is-today': day === today }"
       @click="emit('jump', day)"
     >
-      {{ day === today ? '▶ ' : '' }}{{ formatDate(day, false) }}
+      {{ formatLocalDayLabel(day, new Date(nowMs), false) }}
     </button>
     <div class="day-nav-sep">
       <button class="tool-btn" @click="emit('expandAll')">Expand all</button>

@@ -50,7 +50,7 @@ void views;
         <img src="/favicon.png" class="brand-logo" alt="WInterCo. logo" />
         <span class="brand-copy">
           <span class="title">WinterCo. Timerboard</span>
-          <span class="subtitle">EVE Online - All times UTC</span>
+          <span class="subtitle">EVE clock shown - timers in your local time</span>
         </span>
       </button>
       <div class="clock-box">
