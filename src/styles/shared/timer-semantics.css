@@ -7,13 +7,6 @@
   font-family: var(--font-mono);
 }
 
-/* Improve contrast for system labels */
-.cell-system {
-  color: var(--text-1);
-  font-size: 11px;
-  white-space: nowrap;
-}
-
 .countdown.soon {
   color: var(--amber);
 }

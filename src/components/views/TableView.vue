@@ -222,7 +222,7 @@ tr.major .cell-time {
 
 tr.major .cell-system {
   font-weight: 800;
-  color: #7db7ff;
+  color: var(--text-2);
 }
 
 tr.major .cell-name {
@@ -269,7 +269,7 @@ tr.elapsed .cell-time {
 
 .cell-system {
   font-size: 14px;
-  color: var(--blue);
+  color: var(--text-3);
   white-space: nowrap;
 }
 </style>
