@@ -2,19 +2,23 @@
 import { computed, reactive, ref } from 'vue';
 import { useTimerboard } from '../composables/useTimerboard';
 
-  const props = defineProps<{
+const props = defineProps<{
   progressPercent: number;
   label: string;
   elapsed: number;
   total: number;
   markers: Array<{
     id: string;
+    targetMs: number;
     leftPercent: number;
     status: 'Friendly' | 'Hostile';
     elapsed: boolean;
     major: boolean;
     title: string;
     time: string;
+    localTimeLabel: string;
+    localTimeZoneLabel: string;
+    eveTimeLabel: string;
     system: string;
     structure: string;
     name?: string;
@@ -39,14 +43,8 @@ const tooltip = reactive({
 });
 
 const markerStructureTooltip = computed(() => {
-  // find currently hovered marker (we store targetMs only) by matching targetMs to markers
-  const m = props.markers.find((mk) => {
-    const parts = mk.time.split(':').map((p) => parseInt(p, 10));
-    const now = new Date();
-    const t = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), parts[0] || 0, parts[1] || 0, 0, 0)).getTime();
-    return t === tooltip.targetMs;
-  });
-  return m ? `${m.structure}` : '';
+  const marker = props.markers.find((item) => item.targetMs === tooltip.targetMs);
+  return marker ? `${marker.structure} - ${marker.eveTimeLabel}` : '';
 });
 
 function computeEtaFromTarget(targetMs: number, nowMs: number) {
@@ -106,16 +104,10 @@ function positionTooltip(clientX: number, clientY: number) {
 }
 
 function showMarkerTooltip(marker: (typeof props.markers)[number], event: MouseEvent) {
-  tooltip.title = `${marker.time} UTC · ${marker.system}`;
+  tooltip.title = `${marker.localTimeLabel} ${marker.localTimeZoneLabel} - ${marker.system}`;
   tooltip.subtitle = marker.name || marker.system;
-  // include structure in tooltip display (rendered in template below)
   tooltip.status = marker.status;
-  // compute a target ms for this marker's time (assume same-day UTC)
-  const parts = marker.time.split(':').map((p) => parseInt(p, 10));
-  const now = new Date();
-  const target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), parts[0] || 0, parts[1] || 0, 0, 0));
-  // if target already passed today, keep as-is (countdown will show 'elapsed')
-  tooltip.targetMs = target.getTime();
+  tooltip.targetMs = marker.targetMs;
   tooltip.visible = true;
   positionTooltip(event.clientX, event.clientY);
 }

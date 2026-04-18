@@ -1,7 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Timer } from '../../types/timer';
-import { countdown, countdownClass, formatDate, isVisualMajor, timerDateTime } from '../../utils/timer-utils';
+import {
+  countdown,
+  countdownClass,
+  formatLocalDayLabel,
+  isVisualMajor,
+  localBlockLabel,
+  localBlockStart,
+  localDateKey,
+  localTodayDate,
+  timerDateTime,
+} from '../../utils/timer-utils';
 
 const props = defineProps<{
   timers: Timer[];
@@ -19,13 +29,8 @@ type SideClass = 'hostile' | 'friendly' | 'mixed';
 
 const SUMMARY_CORE_STRUCTURES = new Set(['Keepstar', 'Sotiyo', 'Fortizar', 'IHub', 'TCU', 'Skyhook', 'Orbital Skyhook']);
 
-function blockStart(time: string): number {
-  const h = Number.parseInt(time.split(':')[0] ?? '0', 10);
-  return Math.floor((Number.isFinite(h) ? h : 0) / 3) * 3;
-}
-
 function blockLabel(start: number): string {
-  return `${String(start).padStart(2, '0')}:00-${String(start + 3).padStart(2, '0')}:00`;
+  return localBlockLabel(start);
 }
 
 function plural(count: number, singular: string, customPlural?: string): string {
@@ -37,7 +42,7 @@ function isSummaryCoreTimer(timer: Timer): boolean {
 }
 
 function timerSummaryKey(timer: Timer): string {
-  return `${timer.date}|${blockStart(timer.time)}|${timer.region || 'Unknown'}`;
+  return `${localDateKey(timer)}|${localBlockStart(timer)}|${timer.region || 'Unknown'}`;
 }
 
 function countBy(timers: Timer[], field: 'structure' | 'state'): Record<string, number> {
@@ -99,11 +104,11 @@ const rows = computed<SummaryRow[]>(() => {
     if (!isSummaryCoreTimer(timer) && clusterSize < 2) continue;
 
     const region = timer.region || 'Unknown';
-    const rowKey = `${timer.date}|${blockStart(timer.time)}|${region}`;
+    const rowKey = `${localDateKey(timer)}|${localBlockStart(timer)}|${region}`;
     if (!rowsByKey[rowKey]) {
       rowsByKey[rowKey] = {
-        date: timer.date,
-        blockStart: blockStart(timer.time),
+        date: localDateKey(timer),
+        blockStart: localBlockStart(timer),
         region,
         timers: [],
       };
@@ -123,7 +128,7 @@ const rows = computed<SummaryRow[]>(() => {
 });
 
 const dayKeys = computed(() => Array.from(new Set(rows.value.map((row) => row.date))).sort());
-const today = computed(() => new Date(props.nowMs).toISOString().slice(0, 10));
+const today = computed(() => localTodayDate(new Date(props.nowMs)));
 
 const summaryMeta = computed(() => {
   const keyTimers = rows.value.reduce((sum, row) => sum + row.timers.length, 0);
@@ -150,7 +155,7 @@ const rowsByDate = computed<Record<string, SummaryRow[]>>(() => {
     <div class="summary-head">
       <div>
         <div class="summary-title">Command summary</div>
-        <div class="summary-subtitle">Upcoming key timers by 3-hour UTC block, region, structure, side, and state.</div>
+        <div class="summary-subtitle">Upcoming key timers by local time block, region, structure, side, and state.</div>
       </div>
       <div class="summary-meta">
         <span class="summary-chip">{{ plural(summaryMeta.keyTimers, 'key timer') }}</span>
@@ -163,7 +168,7 @@ const rowsByDate = computed<Record<string, SummaryRow[]>>(() => {
 
     <div v-for="date in dayKeys" :key="date" class="summary-day">
       <div class="summary-day-head" :class="{ today: date === today }">
-        <span>{{ date === today ? 'Today - ' : '' }}{{ formatDate(date) }}</span>
+        <span>{{ formatLocalDayLabel(date, new Date(nowMs)) }}</span>
         <span class="summary-day-line" />
         <span>{{ plural((rowsByDate[date] ?? []).reduce((sum, row) => sum + row.timers.length, 0), 'timer') }}</span>
       </div>

@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import type { Timer } from '../../types/timer';
-import { countdown, countdownClass, formatDate, isVisualMajor, stateKey, timeOfDayClass, timerDateTime } from '../../utils/timer-utils';
+import {
+  countdown,
+  countdownClass,
+  formatLocalDayLabel,
+  isVisualMajor,
+  localTimeLabel,
+  localTimeOfDayClass,
+  localTimeZoneLabel,
+  stateKey,
+  timerDateTime,
+} from '../../utils/timer-utils';
 
 defineProps<{
   groups: Record<string, Timer[]>;
@@ -14,7 +24,7 @@ defineProps<{
   <div class="view-dense active-view">
     <section v-for="date in dates" :key="date" class="dense-day">
       <div class="dense-section-header" :class="{ today: date === today }">
-        <span>{{ date === today ? '▶ Today — ' : '' }}{{ formatDate(date) }}</span>
+        <span>{{ formatLocalDayLabel(date, new Date(nowMs)) }}</span>
         <span class="dsh-count">{{ groups[date]?.length ?? 0 }} timers</span>
       </div>
       <div class="dense-grid">
@@ -23,13 +33,14 @@ defineProps<{
           :key="`${timer.date}-${timer.time}-${timer.system}`"
           class="dense-card"
           :class="[
+            localTimeOfDayClass(timer),
             { major: isVisualMajor(timer), hostile: timer.status === 'Hostile', elapsed: timerDateTime(timer).getTime() <= nowMs },
           ]"
           :title="`${timer.system} · ${timer.name}\n${timer.structure} · ${timer.state}`"
         >
           <div class="dense-card-top">
             <div class="dense-card-prime">
-              <span class="dense-time">{{ timer.time }}</span>
+              <span class="dense-time">{{ localTimeLabel(timer) }} {{ localTimeZoneLabel(timer) }}</span>
               <span class="dense-system">{{ timer.system }}</span>
             </div>
             <div class="dense-card-side">
@@ -166,7 +177,7 @@ defineProps<{
 
 .dense-time {
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--text-1);
   white-space: nowrap;

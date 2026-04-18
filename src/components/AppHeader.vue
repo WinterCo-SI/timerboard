@@ -50,7 +50,6 @@ void views;
         <img src="/favicon.png" class="brand-logo" alt="WInterCo. logo" />
         <span class="brand-copy">
           <span class="title">WinterCo. Timerboard</span>
-          <span class="subtitle">EVE Online - All times UTC</span>
         </span>
       </button>
       <div class="clock-box">
@@ -152,13 +151,6 @@ void views;
   font-size: 15px;
   font-weight: 600;
   color: var(--text-1);
-}
-
-.subtitle {
-  font-size: 10px;
-  color: var(--text-3);
-  margin-top: 2px;
-  font-family: var(--font-mono);
 }
 
 .clock-box {

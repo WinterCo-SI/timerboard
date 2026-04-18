@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Timer } from '../../types/timer';
-import { countdown, countdownClass, formatDate, isVisualMajor, stateKey, timeOfDayClass, timerDateTime } from '../../utils/timer-utils';
+import {
+  countdown,
+  countdownClass,
+  eveTimeContext,
+  formatLocalDayLabel,
+  isVisualMajor,
+  localTimeLabel,
+  localTimeOfDayClass,
+  localTimeZoneLabel,
+  stateKey,
+  timerDateTime,
+} from '../../utils/timer-utils';
 
 const props = defineProps<{
   groups: Record<string, Timer[]>;
@@ -30,7 +41,7 @@ function structureClass(structure: string): string {
     <section v-for="date in dates" :id="`dg-${date}`" :key="date" class="date-group" :class="{ collapsed: collapsed.has(date) }">
       <header class="date-header" @click="emit('toggleDay', date)">
         <span class="date-chevron">▾</span>
-        <div class="date-label" :class="{ today: date === today }">{{ date === today ? '▶ Today · ' : '' }}{{ formatDate(date) }}</div>
+        <div class="date-label" :class="{ today: date === today }">{{ formatLocalDayLabel(date, new Date(nowMs)) }}</div>
         <div class="date-line" />
         <div class="date-count">{{ groups[date]?.length ?? 0 }} timers</div>
       </header>
@@ -54,15 +65,17 @@ function structureClass(structure: string): string {
               v-for="timer in groups[date]"
               :key="`${timer.date}-${timer.time}-${timer.system}-${timer.name}`"
               :class="[
+                localTimeOfDayClass(timer),
                 { major: isVisualMajor(timer), hostile: timer.status === 'Hostile', elapsed: timerDateTime(timer).getTime() <= nowMs },
               ]"
             >
               <td style="width: 22px; text-align: center"><span class="major-star">{{ isVisualMajor(timer) ? '★' : '' }}</span></td>
-              <td style="width: 120px">
+              <td style="width: 140px">
                 <div class="cell-time-row" style="display:flex;gap:8px;align-items:center;">
-                  <div class="cell-time">{{ timer.time }}</div>
-                  <div class="local-time" style="font-size:12px;color:var(--text-3);">{{ timerDateTime(timer).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) }}</div>
+                  <div class="cell-time">{{ localTimeLabel(timer) }}</div>
+                  <div class="local-time">{{ localTimeZoneLabel(timer) }}</div>
                 </div>
+                <div class="eve-time">{{ eveTimeContext(timer) }}</div>
                 <div class="countdown" :class="countdownClass(timerDateTime(timer).getTime() - nowMs)">
                   {{ timerDateTime(timer).getTime() <= nowMs ? 'elapsed' : countdown(timerDateTime(timer).getTime() - nowMs) }}
                 </div>
@@ -257,7 +270,15 @@ tr.elapsed .cell-time {
 
 .local-time {
   font-size: 12px;
-  color: var(--text-1);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.eve-time {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  margin-top: 1px;
   white-space: nowrap;
 }
 

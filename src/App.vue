@@ -99,6 +99,7 @@ function jumpTo(date: string) {
     <DayNav
       v-if="store.currentView === 'table'"
       :days="store.dayKeys"
+      :now-ms="store.nowMs"
       :today="store.today"
       @collapse-all="store.collapseAllDates"
       @expand-all="store.expandAllDates"
