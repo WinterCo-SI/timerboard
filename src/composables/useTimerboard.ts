@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { computed, reactive, ref } from 'vue';
-import { MAJOR_STRUCTURES, RAW_TIMERS } from '../data/timers';
+import { MAJOR_STRUCTURES, RAW_TIMERS, SYSTEM_REGION_LOOKUP } from '../data/timers';
 import type { FilterState, Timer, TimerStats, TimerView } from '../types/timer';
 import {
   countdown,

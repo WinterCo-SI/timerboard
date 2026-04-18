@@ -1,25 +1,20 @@
 import type { Timer } from '../types/timer';
+import { REGION_SYSTEMS } from './map';
 
 export const MAJOR_STRUCTURES = ['Keepstar', 'Fortizar'];
 export const VISUAL_MAJOR_STRUCTURES = ['Keepstar', 'Sotiyo', 'Fortizar'];
 
-export const SYSTEM_REGION_LOOKUP: Record<string, string> = {
-  '00TY-J': 'Pure Blind',
-  Atioth: 'Geminate',
-  '6RQ9-A': 'Geminate',
-  'TDE4-H': 'Geminate',
-  'D-I9HJ': 'Geminate',
-  'P-FSQE': 'Venal',
-  'RQH-MY': 'Pure Blind',
-  'RD-G2R': 'Pure Blind',
-  'XI-VUF': 'Pure Blind',
-  'Q-7SUI': 'Pure Blind',
-  'VFK-IV': 'Deklein',
-  'YJ3-UT': 'Branch',
-  '0M-103': 'Tenal',
-  'FIO1-8': 'Fade',
-  'PF-QHK': 'Venal',
-};
+// Build SYSTEM_REGION_LOOKUP from REGION_SYSTEMS so the map generation is authoritative
+export const SYSTEM_REGION_LOOKUP: Record<string, string> = (() => {
+  const out: Record<string, string> = {};
+  for (const region of Object.keys(REGION_SYSTEMS)) {
+    const systems = REGION_SYSTEMS[region] ?? [];
+    for (const sys of systems) {
+      out[sys] = region;
+    }
+  }
+  return out;
+})();
 
 export const RAW_TIMERS: Timer[] = [
   { date: '2026-04-10', time: '13:33', system: 'Atioth', name: 'Insidious. ihub', structure: 'IHub', state: 'Final', status: 'Hostile', region: 'Geminate' },

@@ -83,6 +83,7 @@ export function normalizeStructureName(raw: string): string {
     ['ansiblex jump bridge', 'Ansiblex Jump Bridge'],
     ['orbital skyhook', 'Orbital Skyhook'],
     ['metenox moon drill', 'Metenox Moon Drill'],
+    ['metenox', 'Metenox Moon Drill'],
     ['motonox moon drill', 'Metenox Moon Drill'],
     ['moon drill', 'Metenox Moon Drill'],
     ['skyhhook', 'Orbital Skyhook'],
@@ -120,7 +121,7 @@ function cleanText(value: unknown, maxLen: number): string {
 function normalizeTimerState(value: unknown): string {
   const cleaned = cleanText(value, TIMER_TEXT_LIMITS.state);
   const key = stateKey(cleaned);
-  if (key === 'final') return 'Final';
+  if (key === 'final') return 'Hull';
   if (key === 'armor') return 'Armor';
   if (key === 'anchor') return 'Anchoring';
   if (key === 'hull') return 'Hull';
