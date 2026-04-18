@@ -69,10 +69,60 @@ export const useTimerboard = defineStore('timerboard', () => {
   }
 
   function extractTimersPayload(payload: unknown): Partial<Timer>[] {
-    if (Array.isArray(payload)) return payload as Partial<Timer>[];
+    // Normalize payloads from different API shapes into Partial<Timer>[]
+    const mapApiTimer = (obj: any): Partial<Timer> | null => {
+      if (!obj || typeof obj !== 'object') return null;
+
+      // If already has date/time keys, prefer them
+      if (obj.date && obj.time) {
+        return {
+          date: String(obj.date),
+          time: String(obj.time),
+          system: obj.system ? String(obj.system) : String(obj.system_name || obj.systemName || obj.system || ''),
+          name: obj.name ? String(obj.name) : String(obj.title || obj.name || ''),
+          structure: obj.structure ? String(obj.structure) : String(obj.type || obj.structure_type || ''),
+          state: obj.state ? String(obj.state) : String(obj.stage || obj.state || ''),
+          status: obj.status ? String(obj.status) : String(obj.stance || obj.status || ''),
+          region: obj.region ? String(obj.region) : String(obj.region_name || obj.region || ''),
+        };
+      }
+
+      // Support APIs that provide an ISO timestamp `until`
+      if (obj.until) {
+        try {
+          const d = new Date(String(obj.until));
+          if (!Number.isNaN(d.getTime())) {
+            const date = d.toISOString().slice(0, 10);
+            const time = d.toISOString().slice(11, 16);
+            return {
+              date,
+              time,
+              system: obj.system ? String(obj.system) : String(obj.system_name || obj.systemName || ''),
+              name: obj.name ? String(obj.name) : String(obj.title || obj.name || ''),
+              structure: obj.type ? String(obj.type) : String(obj.structure || ''),
+              state: obj.stage ? String(obj.stage) : String(obj.state || ''),
+              status: obj.stance ? String(obj.stance) : String(obj.status || ''),
+              region: obj.region ? String(obj.region) : String(obj.region_name || ''),
+            };
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+
+      return null;
+    };
+
+    if (Array.isArray(payload)) return (payload as Partial<Timer>[]).map((p) => p);
     if (!payload || typeof payload !== 'object') return [];
     const source = payload as { timers?: unknown };
-    return Array.isArray(source.timers) ? (source.timers as Partial<Timer>[]) : [];
+    const rawList = Array.isArray(source.timers) ? source.timers : [];
+    const mapped: Partial<Timer>[] = [];
+    for (const item of rawList as any[]) {
+      const mappedItem = mapApiTimer(item);
+      if (mappedItem) mapped.push(mappedItem);
+    }
+    return mapped;
   }
 
   function setTimersFromRemote(list: Partial<Timer>[]) {
@@ -175,9 +225,14 @@ export const useTimerboard = defineStore('timerboard', () => {
         return;
       }
 
+      // Diagnose sanitization: show counts for extracted vs sanitized
+      const sanitizedPreview = sanitizeTimerList(Array.isArray(payload) ? (payload as Partial<Timer>[]) : extracted);
+      // eslint-disable-next-line no-console
+      console.debug('[useTimerboard] fetchRemoteSnapshot counts:', { extracted: (Array.isArray(payload) ? payload.length : extracted.length), sanitized: sanitizedPreview.length });
+      importStatus.value = `API timers: ${Array.isArray(payload) ? payload.length : extracted.length}, usable: ${sanitizedPreview.length}`;
+
       setTimersFromRemote(Array.isArray(payload) ? payload : extracted);
       lastFetchMs.value = Date.now();
-      importStatus.value = `Synced ${timers.value.length} timer(s) from API.`;
     } catch {
       importStatus.value = 'Failed to load timer API snapshot. Using local timers.';
     }
