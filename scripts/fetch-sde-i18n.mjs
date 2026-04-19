@@ -24,6 +24,8 @@ const STRUCTURE_NAMES = [
   'Territorial Claim Unit',
 ];
 
+const CATEGORY_ALLOWLIST = [40, 46, 65, 22];
+
 const STRUCTURE_ALIASES = {
   // IHub: 'Infrastructure Hub',
   IHub: 'Sovereignty Hub',
@@ -90,7 +92,7 @@ function structureMap(typeRecords, groupRecords) {
   );
   for (const record of typeRecords) {
     const group = groupMap.get(Number(record.groupID));
-    if (![40,46,65].includes(Number(group?.categoryID))) {
+    if (!CATEGORY_ALLOWLIST.includes(Number(group?.categoryID))) {
       continue;
     }
     const english = localizedName(record, 'en');
