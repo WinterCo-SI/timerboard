@@ -279,12 +279,12 @@ tr.elapsed .cell-time {
 
 .local-time {
   font-size: 12px;
-  color: var(--text-3);
+  color: var(--text-1);
   white-space: nowrap;
 }
 
 .eve-time {
-  color: var(--text-3);
+  color: var(--text-2);
   font-family: var(--font-mono);
   font-size: 11px;
   white-space: nowrap;
@@ -298,7 +298,7 @@ tr.elapsed .cell-time {
 
 .cell-system {
   font-size: 14px;
-  color: var(--text-3);
+  color: var(--blue);
   white-space: nowrap;
 }
 </style>

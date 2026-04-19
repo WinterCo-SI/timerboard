@@ -12,6 +12,7 @@ const { t } = useTranslation();
 const emit = defineEmits<{
   close: [];
   updateModelValue: [value: string];
+  insertSampleTimers: [];
   import: [mode: 'replace' | 'append'];
   resetTimers: [];
   clearTimers: [];
@@ -34,6 +35,7 @@ function onInput(event: Event) {
         <div class="modal-help">{{ t('import.help') }}</div>
         <textarea id="importText" :value="props.modelValue" spellcheck="false" :placeholder="t('import.placeholder')" @input="onInput" />
         <div class="modal-actions">
+          <button class="tool-btn" @click="emit('insertSampleTimers')">{{ t('import.insertSampleTimers') }}</button>
           <button class="tool-btn" @click="emit('import', 'replace')">{{ t('import.replace') }}</button>
           <button class="tool-btn" @click="emit('import', 'append')">{{ t('import.append') }}</button>
           <button class="tool-btn" @click="emit('resetTimers')">{{ t('import.reset') }}</button>

@@ -146,6 +146,7 @@ function jumpTo(date: string) {
       @clear-timers="store.clearTimers"
       @close="store.closeModals"
       @import="store.importTimers"
+      @insert-sample-timers="store.insertSampleTimers"
       @reset-timers="store.resetTimers"
       @update-model-value="(value) => (store.importText = value)"
     />

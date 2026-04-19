@@ -397,7 +397,7 @@ const regionTopology = computed(() => {
   for (const [system, pos] of Object.entries(positions)) {
     // Use resolved system name keys so positions match `systems` which are resolved
     const resolved = resolveSystemName(region, system);
-    displayPositions[resolved] = pos;
+    displayPositions[resolved] = [pos[0], REGION_VIEW_HEIGHT - pos[1]];
   }
 
   return { region, systems, edges, positions: displayPositions };

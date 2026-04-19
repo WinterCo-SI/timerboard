@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { computed, reactive, ref } from 'vue';
+import { generateSampleTimerText } from '../data/sample-timers';
 import {
   MAJOR_STRUCTURES,
   RAW_TIMERS,
@@ -506,6 +507,21 @@ export const useTimerboard = defineStore('timerboard', () => {
     importStatus.value = '';
   }
 
+  function insertSampleTimers() {
+    if (DISABLE_PASTE) {
+      importStatus.value = i18next.t('status.pasteDisabled');
+      return;
+    }
+
+    importText.value = generateSampleTimerText();
+    importStatus.value = i18next.t('status.sampleTimersInserted', {
+      count: 40,
+    });
+    window.setTimeout(() => {
+      document.getElementById('importText')?.focus();
+    }, 0);
+  }
+
   function resetTimers() {
     timers.value = sanitizeTimerList(RAW_TIMERS);
     saveTimers();
@@ -830,6 +846,7 @@ export const useTimerboard = defineStore('timerboard', () => {
     closeModals,
     openImport,
     importTimers,
+    insertSampleTimers,
     resetTimers,
     clearTimers,
     clearLocalData,
