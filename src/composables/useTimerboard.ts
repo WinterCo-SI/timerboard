@@ -190,9 +190,12 @@ export const useTimerboard = defineStore('timerboard', () => {
       const struct = (mappedItem.structure || '').toLowerCase();
       const name = (mappedItem.name || '').toLowerCase();
       const status = (mappedItem.status || '').toLowerCase();
+      const owner = (mappedItem.owner || '').toLowerCase();
       if (String(idVal) === 'Auth' && struct.includes('skyhook') && status === 'friendly') continue;
       if (String(idVal) === 'TEST' && struct.includes('skyhook')) continue;
       if (String(idVal) === 'NC' && name.includes('[ihub]')) continue;
+      if (String(idVal) === 'Auth' && name.includes('(fraternity building management)')) continue;
+      if (String(idVal) === 'Auth' && owner.includes('(fraternity building management)')) continue;
       mapped.push(mappedItem);
     }
     // Normalize state values and deduplicate by normalized system|name|structure|state — keep earliest timer
