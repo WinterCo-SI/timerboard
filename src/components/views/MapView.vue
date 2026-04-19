@@ -151,7 +151,7 @@ function passesPreset(timer: Timer, preset: MapTriagePreset): boolean {
     case 'friendlySov':
       return (
         timer.status === 'Friendly' &&
-        (timer.structure === 'IHub' || timer.structure === 'TCU')
+        (timer.structure === 'IHub' || timer.structure === 'TCU' || timer.structure === 'Sovereignty Hub')
       );
     case 'friendlyMajors':
       return (
