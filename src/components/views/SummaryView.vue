@@ -221,7 +221,7 @@ const rowsByDate = computed<Record<string, SummaryRow[]>>(() => {
         <div class="summary-block-head">
           <div class="summary-window-wrap">
             <div class="summary-window">{{ blockLabel(row.blockStart) }}</div>
-            <div class="summary-kicker">{{ firstMs(row.timers) - nowMs < 6 * 3600 * 1000 ? t('summary.soonestPressure') : t('summary.timeBlock') }}</div>
+            <div class="summary-kicker">{{ firstMs(row.timers) - nowMs < 6 * 3600 * 1000 ? t('summary.soonestPressure') : t('common.timeBlock') }}</div>
           </div>
           <div>
             <div class="summary-region">{{ translateRegion(row.region) }}</div>
