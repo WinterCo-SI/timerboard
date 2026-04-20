@@ -208,6 +208,13 @@ export const useTimerboard = defineStore('timerboard', () => {
       if (it.state) it.state = normalizeTimerState(it.state);
     }
 
+    // Pick the longest owner string when merging duplicates
+    const mergeOwner = (winner: Partial<Timer>, loser: Partial<Timer>) => {
+      const w = String((winner as any).owner ?? '').trim();
+      const l = String((loser as any).owner ?? '').trim();
+      if (l.length > w.length) (winner as any).owner = l;
+    };
+
     const deduped = new Map<string, Partial<Timer>>();
     const SEAT_PRIORITY_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
     for (const item of mapped) {
@@ -229,20 +236,26 @@ export const useTimerboard = defineStore('timerboard', () => {
           Math.abs(a - b) <= SEAT_PRIORITY_WINDOW_MS
         ) {
           if ((item as any).id === 'SeAT' && (existing as any).id !== 'SeAT') {
+            mergeOwner(item, existing);
             deduped.set(key, item);
             continue;
           }
           if ((existing as any).id === 'SeAT' && (item as any).id !== 'SeAT') {
+            mergeOwner(existing, item);
             continue; // keep existing
           }
         }
 
         // Fallback: keep earliest
         if (!Number.isNaN(a) && (Number.isNaN(b) || a < b)) {
+          mergeOwner(item, existing);
           deduped.set(key, item);
+        } else {
+          mergeOwner(existing, item);
         }
       } catch {
         // fallback: keep existing
+        mergeOwner(existing, item);
       }
     }
 
