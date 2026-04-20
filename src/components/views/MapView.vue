@@ -1314,7 +1314,7 @@ watch(universePanBounds, () => {
                     {{ item.timers[0] ? `${localTimeLabel(item.timers[0])} ${localTimeZoneLabel(item.timers[0])}` : '' }} · {{ tooltipCountdown(item.earliestMs - props.nowMs) }}
                   </div>
                 </div>
-                <div class="map-action-count">{{ item.timers[0] ? eveTimeContext(item.timers[0]) : '' }} · {{ t(item.timers.length === 1 ? 'map.timerCount' : 'map.timersCount', { count: item.timers.length }) }}</div>
+                <div class="map-action-count">{{ item.timers[0] ? eveTimeContext(item.timers[0]) : '' }} · {{ t('map.timerCount', { count: item.timers.length }) }}</div>
               </div>
             </div>
           </div>

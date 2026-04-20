@@ -127,7 +127,6 @@
     "universe": "宇宙",
     "nextActions": "下一步行动",
     "emptyActions": "此过滤条件下没有即将到来的时刻。",
-    "timersCount": "{{count}} 个时刻",
     "timerCount": "{{count}} 个时刻",
     "hostileFriendlyShort": "{{hostile}} 敌 · {{friendly}} 友",
     "systemInRegion": "{{system}} < {{region}}"
