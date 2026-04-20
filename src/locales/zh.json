@@ -132,7 +132,6 @@
     "scrubTimeline": "拖动时间线",
     "scrubVisibleCount": "已显示 {{visible}} / {{total}} 个时刻",
     "noScrubTimers": "此时间范围内没有时刻。",
-    "timersCount": "{{count}} 个时刻",
     "timerCount": "{{count}} 个时刻",
     "hostileFriendlyShort": "{{hostile}} 敌 · {{friendly}} 友",
     "systemInRegion": "{{system}} < {{region}}"
