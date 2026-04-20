@@ -239,6 +239,8 @@ export function normalizeStructureName(raw: string): string {
     ['skyhhook', 'Orbital Skyhook'],
     ['skyhook', 'Orbital Skyhook'],
     ['astra', 'Astrahus'],
+    ['keep', 'Keepstar'],
+    ['fort', 'Fortizar'],
     ['ansi', 'Ansiblex Jump Bridge'],
     // ['ihub', 'Infrastructure Hub'],
     // ['infrastructure hub', 'Infrastructure Hub'],
