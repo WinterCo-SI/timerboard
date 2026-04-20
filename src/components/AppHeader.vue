@@ -260,7 +260,7 @@ void onLanguageChange;
 
   .header-nav,
   .header-actions {
-    justify-content: flex-start;
+    justify-content: center;
   }
 }
 
@@ -295,7 +295,7 @@ void onLanguageChange;
   .view-btn {
     justify-content: center;
     padding: 5px 6px;
-    font-size: 11px;
+    font-size: 14px;
   }
 
   .view-btn.active {
