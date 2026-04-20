@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { useTranslation } from 'i18next-vue';
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onUnmounted, reactive, ref, watch } from 'vue';
 import {
   MAP_TRIAGE_PRESETS,
   MAP_WAVES,
@@ -45,6 +45,8 @@ const UNIVERSE_VIEW_WIDTH = 1000;
 const UNIVERSE_VIEW_HEIGHT = 700;
 const UNIVERSE_VIEW_PADDING = 24;
 const DRAG_CLICK_THRESHOLD = 5;
+const SCRUB_PLAY_INTERVAL_MS = 120;
+const SCRUB_PLAY_DURATION_MS = 12000;
 
 // Region circle sizing constants
 const REGION_BASE_RADIUS = 8;
@@ -61,6 +63,8 @@ const selectedRegion = ref<string | null>(null);
 const universeScale = ref(1);
 const regionScale = ref(1);
 const triagePreset = ref<MapTriagePreset>('all');
+const scrubMs = ref(0);
+const isPlaying = ref(false);
 const panX = ref(0);
 const panY = ref(0);
 const universePanX = ref(0);
@@ -110,7 +114,6 @@ const mapTooltip = reactive({
     countdownCls: '' | 'soon' | 'urgent';
   }>,
 });
-
 
 function timerRegion(timer: Timer): string {
   return timer.region || 'Unknown';
@@ -176,13 +179,119 @@ function waveMetaFromMs(ms: number) {
   );
 }
 
-const triageTimers = computed(() => {
-  return props.timers.filter(
-    (timer) =>
-      timerDateTime(timer).getTime() > props.nowMs &&
-      passesPreset(timer, triagePreset.value),
+const upcomingTriageTimers = computed(() => {
+  return props.timers
+    .filter(
+      (timer) =>
+        timerDateTime(timer).getTime() > props.nowMs &&
+        passesPreset(timer, triagePreset.value),
+    )
+    .slice()
+    .sort((a, b) => timerDateTime(a).getTime() - timerDateTime(b).getTime());
+});
+
+const scrubMinMs = computed(() => props.nowMs);
+const scrubMaxMs = computed(() => {
+  const last =
+    upcomingTriageTimers.value[upcomingTriageTimers.value.length - 1];
+  return last ? timerDateTime(last).getTime() : props.nowMs;
+});
+const hasScrubTimers = computed(() => upcomingTriageTimers.value.length > 0);
+const visibleMapTimers = computed(() => {
+  if (!hasScrubTimers.value) return [];
+  const cutoff = clamp(scrubMs.value, scrubMinMs.value, scrubMaxMs.value);
+  return upcomingTriageTimers.value.filter(
+    (timer) => timerDateTime(timer).getTime() <= cutoff,
   );
 });
+const scrubVisibleCount = computed(() => visibleMapTimers.value.length);
+const scrubTotalCount = computed(() => upcomingTriageTimers.value.length);
+const scrubLabel = computed(() => {
+  if (!hasScrubTimers.value) return t('map.noScrubTimers');
+  const date = new Date(
+    clamp(scrubMs.value, scrubMinMs.value, scrubMaxMs.value),
+  );
+  return `${localTimeLabel(date)} ${localTimeZoneLabel(date)} - ${eveTimeContext(date)}`;
+});
+const scrubRangeSpan = computed(() =>
+  Math.max(1, scrubMaxMs.value - scrubMinMs.value),
+);
+const upcomingScrubKey = computed(() =>
+  upcomingTriageTimers.value
+    .map(
+      (timer) =>
+        `${timer.date}|${timer.time}|${timer.region}|${timer.system}|${timer.structure}|${timer.name}`,
+    )
+    .join('\n'),
+);
+
+let playIntervalId = 0;
+
+function stopScrubPlayback() {
+  isPlaying.value = false;
+  if (playIntervalId) {
+    window.clearInterval(playIntervalId);
+    playIntervalId = 0;
+  }
+}
+
+function advanceScrubPlayback() {
+  if (!hasScrubTimers.value) {
+    stopScrubPlayback();
+    return;
+  }
+
+  const step =
+    (scrubRangeSpan.value / SCRUB_PLAY_DURATION_MS) * SCRUB_PLAY_INTERVAL_MS;
+  const next = Math.min(scrubMaxMs.value, scrubMs.value + Math.max(1000, step));
+  scrubMs.value = next;
+
+  if (next >= scrubMaxMs.value) stopScrubPlayback();
+}
+
+function toggleScrubPlayback() {
+  if (!hasScrubTimers.value) return;
+  if (isPlaying.value) {
+    stopScrubPlayback();
+    return;
+  }
+
+  if (scrubMs.value >= scrubMaxMs.value) scrubMs.value = scrubMinMs.value;
+  isPlaying.value = true;
+  advanceScrubPlayback();
+  playIntervalId = window.setInterval(
+    advanceScrubPlayback,
+    SCRUB_PLAY_INTERVAL_MS,
+  );
+}
+
+function setScrubFromInput(event: Event) {
+  const value = Number.parseInt((event.target as HTMLInputElement).value, 10);
+  if (!Number.isFinite(value)) return;
+  scrubMs.value = clamp(value, scrubMinMs.value, scrubMaxMs.value);
+}
+
+watch(
+  upcomingScrubKey,
+  () => {
+    stopScrubPlayback();
+    scrubMs.value = hasScrubTimers.value ? scrubMaxMs.value : props.nowMs;
+  },
+  { immediate: true },
+);
+
+watch(
+  () => props.nowMs,
+  () => {
+    if (!hasScrubTimers.value) {
+      scrubMs.value = props.nowMs;
+      return;
+    }
+    scrubMs.value = clamp(scrubMs.value, scrubMinMs.value, scrubMaxMs.value);
+  },
+);
+
+onUnmounted(stopScrubPlayback);
 
 const byRegion = computed(() => {
   const data: Record<
@@ -198,7 +307,7 @@ const byRegion = computed(() => {
     }
   > = {};
 
-  for (const timer of triageTimers.value) {
+  for (const timer of visibleMapTimers.value) {
     const region = timerRegion(timer);
     if (!data[region]) {
       data[region] = {
@@ -282,10 +391,10 @@ const actionGroups = computed(() => {
     }>
   > = {};
   const source = selectedRegion.value
-    ? triageTimers.value.filter(
+    ? visibleMapTimers.value.filter(
         (timer) => timerRegion(timer) === selectedRegion.value,
       )
-    : triageTimers.value;
+    : visibleMapTimers.value;
 
   for (const timer of source) {
     const region = timerRegion(timer);
@@ -336,7 +445,7 @@ const regionTopology = computed(() => {
   const generatedSystems = Object.keys(generatedPositions);
   const timerSystems = Array.from(
     new Set(
-      triageTimers.value
+      visibleMapTimers.value
         .filter((timer) => timerRegion(timer) === region)
         .map((timer) => resolveSystemName(region, timer.system)),
     ),
@@ -406,7 +515,7 @@ const regionTopology = computed(() => {
 function systemTimers(system: string): Timer[] {
   const region = selectedRegion.value;
   if (!region) return [];
-  return triageTimers.value.filter(
+  return visibleMapTimers.value.filter(
     (timer) =>
       timerRegion(timer) === region &&
       resolveSystemName(region, timer.system) === system,
@@ -524,7 +633,7 @@ function returnToUniverse() {
 }
 
 function onRegionHover(region: string, event: MouseEvent) {
-  const rows = triageTimers.value
+  const rows = visibleMapTimers.value
     .filter((timer) => timerRegion(timer) === region)
     .slice()
     .sort((a, b) => timerDateTime(a).getTime() - timerDateTime(b).getTime())
@@ -535,7 +644,7 @@ function onRegionHover(region: string, event: MouseEvent) {
         id: `${region}-${timer.system}-${timer.time}-${index}`,
         status: timer.status,
         name: timer.name,
-        owner: (timer as any).owner || '',
+        owner: timer.owner || '',
         structure: timer.structure,
         state: timer.state,
         countdown: tooltipCountdown(ms),
@@ -556,7 +665,7 @@ function onSystemHover(system: string, event: MouseEvent) {
       return {
         id: `${system}-${timer.time}-${index}`,
         status: timer.status,
-        owner: (timer as any).owner || '',
+        owner: timer.owner || '',
         name: timer.name,
         structure: timer.structure,
         state: timer.state,
@@ -1035,10 +1144,50 @@ watch(universePanBounds, () => {
     <div class="map-triage-bar">
       <span class="map-triage-label">{{ t('map.triage') }}</span>
       <select v-model="triagePreset" class="map-triage-select">
-        <option v-for="(label, key) in MAP_TRIAGE_PRESETS" :key="key" :value="key">
+        <option
+          v-for="(label, key) in MAP_TRIAGE_PRESETS"
+          :key="key"
+          :value="key"
+        >
           {{ label }}
         </option>
-      </select>      
+      </select>
+
+      <div class="map-scrub-controls">
+        <button
+          class="tool-btn map-scrub-play"
+          type="button"
+          :aria-pressed="isPlaying"
+          :disabled="!hasScrubTimers"
+          @click="toggleScrubPlayback"
+        >
+          {{ isPlaying ? t('map.scrubPause') : t('map.scrubPlay') }}
+        </button>
+        <label class="map-scrub-label" for="mapTimelineScrubber">
+          {{ t('map.scrubTimeline') }}
+        </label>
+        <input
+          id="mapTimelineScrubber"
+          class="map-scrub-range"
+          type="range"
+          :aria-label="t('map.scrubTimeline')"
+          :disabled="!hasScrubTimers"
+          :min="scrubMinMs"
+          :max="scrubMaxMs"
+          step="60000"
+          :value="scrubMs"
+          @input="setScrubFromInput"
+        />
+        <span class="map-scrub-time">{{ scrubLabel }}</span>
+        <span class="map-scrub-count">
+          {{
+            t('map.scrubVisibleCount', {
+              visible: scrubVisibleCount,
+              total: scrubTotalCount,
+            })
+          }}
+        </span>
+      </div>
     </div>
 
     <div class="summary-head">
@@ -1048,7 +1197,7 @@ watch(universePanBounds, () => {
       </div>
     </div>
 
-    <div v-if="!byRegion.length" class="summary-empty">{{ t('map.empty') }}</div>
+    <div v-if="!hasScrubTimers" class="summary-empty">{{ t('map.empty') }}</div>
 
     <div class="map-wrap" v-else>
       <div class="map-svg-wrap">
@@ -1063,7 +1212,9 @@ watch(universePanBounds, () => {
           </button>
           <template v-if="selectedRegion">
             <span class="map-breadcrumb-separator" aria-hidden="true">/</span>
-            <span class="map-breadcrumb-current" aria-current="page">{{ translateRegion(selectedRegion) }}</span>
+            <span class="map-breadcrumb-current" aria-current="page">{{
+              translateRegion(selectedRegion)
+            }}</span>
           </template>
         </nav>
 
@@ -1071,19 +1222,42 @@ watch(universePanBounds, () => {
           <div class="map-legend-item" v-for="wave in MAP_WAVES" :key="wave.id">
             <span class="map-wave-dot" :class="wave.cls" /> {{ wave.label }}
           </div>
-          <div class="map-legend-item"><span class="map-legend-dot" style="background: var(--border-mid)" /> {{ t('map.noActiveTimers') }}</div>
           <div class="map-legend-item">
-            <span style="width: 7px; height: 7px; border-radius: 50%; background: #ff4d5d; border: 1px solid rgba(0, 0, 0, 0.55); display: inline-block" />
+            <span
+              class="map-legend-dot"
+              style="background: var(--border-mid)"
+            />
+            {{ t('map.noActiveTimers') }}
+          </div>
+          <div class="map-legend-item">
+            <span
+              style="
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: #ff4d5d;
+                border: 1px solid rgba(0, 0, 0, 0.55);
+                display: inline-block;
+              "
+            />
             {{ t('map.majorStructures') }}
           </div>
-          <span style="color: var(--text-3); font-size: 14px">{{ t('map.legendHint') }}</span>
+          <span style="color: var(--text-3); font-size: 14px">{{
+            t('map.legendHint')
+          }}</span>
         </div>
 
         <svg
           v-if="!selectedRegion"
           viewBox="0 0 1000 700"
           xmlns="http://www.w3.org/2000/svg"
-          style="width: 100%; height: auto; display: block; font-family: var(--font-sans); touch-action: none"
+          style="
+            width: 100%;
+            height: auto;
+            display: block;
+            font-family: var(--font-sans);
+            touch-action: none;
+          "
           :style="{ cursor: universeDragState.active ? 'grabbing' : 'grab' }"
           @pointerdown="startUniverseDrag"
           @pointermove="moveUniverseDrag"
@@ -1096,7 +1270,9 @@ watch(universePanBounds, () => {
           @pointerleave="endUniverseDrag"
           @dblclick="resetUniversePan"
         >
-          <g :transform="`translate(${universePanX} ${universePanY}) scale(${universeScale})`">
+          <g
+            :transform="`translate(${universePanX} ${universePanY}) scale(${universeScale})`"
+          >
             <g class="map-universe-links">
               <line
                 v-for="edge in universeRegionLinks"
@@ -1105,7 +1281,11 @@ watch(universePanBounds, () => {
                 :y1="edge.y1"
                 :x2="edge.x2"
                 :y2="edge.y2"
-                :stroke="edge.active ? 'rgba(83, 136, 209, 0.4)' : 'rgba(82, 94, 120, 0.28)'"
+                :stroke="
+                  edge.active
+                    ? 'rgba(83, 136, 209, 0.4)'
+                    : 'rgba(82, 94, 120, 0.28)'
+                "
                 :stroke-width="edge.active ? 1.4 : 1"
               />
             </g>
@@ -1118,67 +1298,82 @@ watch(universePanBounds, () => {
               @mousemove="moveMapTooltip($event)"
               @mouseleave="hideMapTooltip"
             >
-            <circle
-              :cx="pos[0]"
-              :cy="pos[1]"
-              :r="regionRadius(region)"
-              :fill="byRegionMap[region]?.waveColor ?? 'rgba(42,48,64,0.6)'"
-              :fill-opacity="byRegionMap[region] ? 0.74 : 0.56"
-              :stroke="
-                !byRegionMap[region]
-                  ? 'var(--border)'
-                  : byRegionMap[region].hostile > byRegionMap[region].friendly
-                    ? 'rgba(192,64,74,0.9)'
-                    : byRegionMap[region].friendly > byRegionMap[region].hostile
-                      ? 'rgba(61,158,106,0.9)'
-                      : 'rgba(212,220,232,0.65)'
-              "
-              :stroke-width="byRegionMap[region] ? 1.5 : 0.5"
-            />
+              <circle
+                :cx="pos[0]"
+                :cy="pos[1]"
+                :r="regionRadius(region)"
+                :fill="byRegionMap[region]?.waveColor ?? 'rgba(42,48,64,0.6)'"
+                :fill-opacity="byRegionMap[region] ? 0.74 : 0.56"
+                :stroke="
+                  !byRegionMap[region]
+                    ? 'var(--border)'
+                    : byRegionMap[region].hostile > byRegionMap[region].friendly
+                      ? 'rgba(192,64,74,0.9)'
+                      : byRegionMap[region].friendly >
+                          byRegionMap[region].hostile
+                        ? 'rgba(61,158,106,0.9)'
+                        : 'rgba(212,220,232,0.65)'
+                "
+                :stroke-width="byRegionMap[region] ? 1.5 : 0.5"
+              />
 
-            <path
-              v-if="byRegionMap[region] && byRegionMap[region].hostile > 0"
-              :d="hostileWedgePath(pos[0], pos[1], regionRadius(region), byRegionMap[region].hostile, byRegionMap[region].total)"
-              fill="rgba(0,0,0,0.18)"
-              stroke="none"
-              pointer-events="none"
-            />
+              <path
+                v-if="byRegionMap[region] && byRegionMap[region].hostile > 0"
+                :d="
+                  hostileWedgePath(
+                    pos[0],
+                    pos[1],
+                    regionRadius(region),
+                    byRegionMap[region].hostile,
+                    byRegionMap[region].total,
+                  )
+                "
+                fill="rgba(0,0,0,0.18)"
+                stroke="none"
+                pointer-events="none"
+              />
 
-            <text
-              v-if="byRegionMap[region]"
-              :x="pos[0]"
-              :y="pos[1] + 1"
-              text-anchor="middle"
-              dominant-baseline="middle"
-              :fill="isLightColor(byRegionMap[region].waveColor) ? 'rgba(0,0,0,0.9)' : '#fff'"
-              font-size="10"
-              font-weight="700"
-            >
-              {{ byRegionMap[region].total }}
-            </text>
+              <text
+                v-if="byRegionMap[region]"
+                :x="pos[0]"
+                :y="pos[1] + 1"
+                text-anchor="middle"
+                dominant-baseline="middle"
+                :fill="
+                  isLightColor(byRegionMap[region].waveColor)
+                    ? 'rgba(0,0,0,0.9)'
+                    : '#fff'
+                "
+                font-size="10"
+                font-weight="700"
+              >
+                {{ byRegionMap[region].total }}
+              </text>
 
-            <circle
-              v-if="byRegionMap[region]?.hasMajor"
-              :cx="pos[0] + regionRadius(region) * 0.42"
-              :cy="pos[1] - regionRadius(region) * 0.32"
-              r="3.2"
-              fill="#ff4d5d"
-              stroke="rgba(0,0,0,0.55)"
-              stroke-width="1.1"
-              pointer-events="none"
-            />
+              <circle
+                v-if="byRegionMap[region]?.hasMajor"
+                :cx="pos[0] + regionRadius(region) * 0.42"
+                :cy="pos[1] - regionRadius(region) * 0.32"
+                r="3.2"
+                fill="#ff4d5d"
+                stroke="rgba(0,0,0,0.55)"
+                stroke-width="1.1"
+                pointer-events="none"
+              />
 
-            <text
-              :x="pos[0]"
-              :y="pos[1] + (byRegionMap[region] ? regionRadius(region) + 9 : 17)"
-              text-anchor="middle"
-              :fill="byRegionMap[region] ? '#d4dce8' : '#4a5568'"
-              :font-size="byRegionMap[region] ? 9 : 7"
-              pointer-events="none"
-            >
-              <!-- {{ shortRegionName(region) }} -->
+              <text
+                :x="pos[0]"
+                :y="
+                  pos[1] + (byRegionMap[region] ? regionRadius(region) + 9 : 17)
+                "
+                text-anchor="middle"
+                :fill="byRegionMap[region] ? '#d4dce8' : '#4a5568'"
+                :font-size="byRegionMap[region] ? 9 : 7"
+                pointer-events="none"
+              >
+                <!-- {{ shortRegionName(region) }} -->
                 {{ translateRegion(region) }}
-            </text>
+              </text>
             </g>
           </g>
         </svg>
@@ -1201,7 +1396,14 @@ watch(universePanBounds, () => {
           @pointerleave="endRegionDrag"
           @dblclick="resetRegionPan"
         >
-          <text x="500" y="26" text-anchor="middle" fill="var(--text-2)" font-size="16" font-weight="700">
+          <text
+            x="500"
+            y="26"
+            text-anchor="middle"
+            fill="var(--text-2)"
+            font-size="16"
+            font-weight="700"
+          >
             {{ translateRegion(selectedRegion) }}
           </text>
 
@@ -1233,8 +1435,14 @@ watch(universePanBounds, () => {
               />
               <circle
                 v-if="systemHasMajor(system)"
-                :cx="(regionTopology.positions[system]?.[0] ?? 0) + systemRadius(system) * 0.45"
-                :cy="(regionTopology.positions[system]?.[1] ?? 0) - systemRadius(system) * 0.35"
+                :cx="
+                  (regionTopology.positions[system]?.[0] ?? 0) +
+                  systemRadius(system) * 0.45
+                "
+                :cy="
+                  (regionTopology.positions[system]?.[1] ?? 0) -
+                  systemRadius(system) * 0.35
+                "
                 r="2.8"
                 fill="#ff4d5d"
                 stroke="rgba(0,0,0,0.55)"
@@ -1245,16 +1453,26 @@ watch(universePanBounds, () => {
                 :x="regionTopology.positions[system]?.[0] ?? 0"
                 :y="(regionTopology.positions[system]?.[1] ?? 0) + 3"
                 text-anchor="middle"
-                :fill="isLightColor(systemNodeColor(system)) ? 'rgba(0,0,0,0.9)' : '#fff'"
+                :fill="
+                  isLightColor(systemNodeColor(system))
+                    ? 'rgba(0,0,0,0.9)'
+                    : '#fff'
+                "
                 font-size="11"
                 font-weight="700"
                 pointer-events="none"
               >
-                {{ systemTimers(system).length ? systemTimers(system).length : '' }}
+                {{
+                  systemTimers(system).length ? systemTimers(system).length : ''
+                }}
               </text>
               <text
                 :x="regionTopology.positions[system]?.[0] ?? 0"
-                :y="(regionTopology.positions[system]?.[1] ?? 0) + systemRadius(system) + 10"
+                :y="
+                  (regionTopology.positions[system]?.[1] ?? 0) +
+                  systemRadius(system) +
+                  10
+                "
                 text-anchor="middle"
                 fill="var(--text-3)"
                 font-size="8"
@@ -1268,10 +1486,11 @@ watch(universePanBounds, () => {
       </div>
 
       <div class="map-sidebar">
-        
-
-        <div class="map-region-card universe-card" @click="returnToUniverse"
-          :class="{active: selectedRegion === null}">
+        <div
+          class="map-region-card universe-card"
+          @click="returnToUniverse"
+          :class="{ active: selectedRegion === null }"
+        >
           <div class="map-rc-name">{{ t('map.universe') }}</div>
         </div>
 
@@ -1284,37 +1503,113 @@ watch(universePanBounds, () => {
         >
           <div class="map-rc-name">
             {{ translateRegion(region) }}
-            <span style="font-size: 12px; font-weight: 400; color: var(--text-3)">{{ t('map.timerCount', { count: data.total }) }}</span>
+            <span
+              style="font-size: 12px; font-weight: 400; color: var(--text-3)"
+              >{{ t('map.timerCount', { count: data.total }) }}</span
+            >
           </div>
           <div class="map-rc-bars">
-            <div v-if="data.hostile" class="map-rc-bar hostile" :style="{ width: `${Math.round((data.hostile / data.total) * 80)}px` }" />
-            <div v-if="data.friendly" class="map-rc-bar friendly" :style="{ width: `${Math.round((data.friendly / data.total) * 80)}px` }" />
-            <span class="map-rc-nums">{{ t('map.hostileFriendlyShort', { hostile: data.hostile, friendly: data.friendly }) }}</span>
+            <div
+              v-if="data.hostile"
+              class="map-rc-bar hostile"
+              :style="{
+                width: `${Math.round((data.hostile / data.total) * 80)}px`,
+              }"
+            />
+            <div
+              v-if="data.friendly"
+              class="map-rc-bar friendly"
+              :style="{
+                width: `${Math.round((data.friendly / data.total) * 80)}px`,
+              }"
+            />
+            <span class="map-rc-nums">{{
+              t('map.hostileFriendlyShort', {
+                hostile: data.hostile,
+                friendly: data.friendly,
+              })
+            }}</span>
           </div>
         </div>
 
         <div class="map-actions">
           <div class="map-actions-title">{{ t('map.nextActions') }}</div>
-          <div v-if="!actionGroups.length" class="map-actions-empty">{{ t('map.emptyActions') }}</div>
-          <div v-for="group in actionGroups" :key="group.wave.id" class="map-wave-group">
-            <div class="map-wave-head"><span class="map-wave-dot" :class="group.wave.cls" />{{ group.wave.label }}</div>
-            <div v-for="item in group.items.slice(0, 10)" :key="`${item.region}-${item.system}`" class="map-action-row">
+          <div v-if="!actionGroups.length" class="map-actions-empty">
+            {{ t('map.noScrubTimers') }}
+          </div>
+          <div
+            v-for="group in actionGroups"
+            :key="group.wave.id"
+            class="map-wave-group"
+          >
+            <div class="map-wave-head">
+              <span class="map-wave-dot" :class="group.wave.cls" />{{
+                group.wave.label
+              }}
+            </div>
+            <div
+              v-for="item in group.items.slice(0, 10)"
+              :key="`${item.region}-${item.system}`"
+              class="map-action-row"
+            >
               <div class="map-action-main">
-                <div class="map-action-sys" :title="selectedRegion ? translateSystem(item.system) : t('map.systemInRegion', { system: translateSystem(item.system), region: translateRegion(item.region) })">
-                  {{ selectedRegion ? translateSystem(item.system) : t('map.systemInRegion', { system: translateSystem(item.system), region: translateRegion(item.region) }) }}
+                <div
+                  class="map-action-sys"
+                  :title="
+                    selectedRegion
+                      ? translateSystem(item.system)
+                      : t('map.systemInRegion', {
+                          system: translateSystem(item.system),
+                          region: translateRegion(item.region),
+                        })
+                  "
+                >
+                  {{
+                    selectedRegion
+                      ? translateSystem(item.system)
+                      : t('map.systemInRegion', {
+                          system: translateSystem(item.system),
+                          region: translateRegion(item.region),
+                        })
+                  }}
                 </div>
                 <div class="map-action-meta" :title="item.timers[0]?.structure">
                   {{ translateStructure(item.timers[0]?.structure) }}
                 </div>
               </div>
               <div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <span class="status-dot" :class="item.timers[0]?.status === 'Friendly' ? 'ours' : 'theirs'" :title="item.timers[0]?.owner ? `${translateStatus(item.timers[0].status)} - ${item.timers[0].owner}` : translateStatus(item.timers[0]?.status)" />
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <span
+                    class="status-dot"
+                    :class="
+                      item.timers[0]?.status === 'Friendly' ? 'ours' : 'theirs'
+                    "
+                    :title="
+                      item.timers[0]?.owner
+                        ? `${translateStatus(item.timers[0].status)} - ${item.timers[0].owner}`
+                        : translateStatus(item.timers[0]?.status)
+                    "
+                  />
                   <div class="map-action-time">
-                    {{ item.timers[0] ? `${localTimeLabel(item.timers[0])} ${localTimeZoneLabel(item.timers[0])}` : '' }} · {{ tooltipCountdown(item.earliestMs - props.nowMs) }}
+                    {{
+                      item.timers[0]
+                        ? `${localTimeLabel(item.timers[0])} ${localTimeZoneLabel(item.timers[0])}`
+                        : ''
+                    }}
+                    · {{ tooltipCountdown(item.earliestMs - props.nowMs) }}
                   </div>
                 </div>
-                <div class="map-action-count">{{ item.timers[0] ? eveTimeContext(item.timers[0]) : '' }} · {{ t(item.timers.length === 1 ? 'map.timerCount' : 'map.timersCount', { count: item.timers.length }) }}</div>
+                <div class="map-action-count">
+                  {{ item.timers[0] ? eveTimeContext(item.timers[0]) : '' }} ·
+                  {{
+                    t(
+                      item.timers.length === 1
+                        ? 'map.timerCount'
+                        : 'map.timersCount',
+                      { count: item.timers.length },
+                    )
+                  }}
+                </div>
               </div>
             </div>
           </div>
@@ -1332,12 +1627,34 @@ watch(universePanBounds, () => {
           <span>{{ t('map.noActiveTimers') }}</span>
         </div>
         <div v-for="row in mapTooltip.rows" :key="row.id" class="mst-row">
-          <span class="mst-dot" :class="row.status === 'Hostile' ? 'hostile' : 'friendly'" :title="translateStatus(row.status)" />
-          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
-            <span class="mst-name" style="font-weight:700;">{{ row.name }}<span v-if="row.owner"> ({{ row.owner }})</span></span>
-            <span class="mst-struct" style="font-size:12px;color:var(--text-3);">{{ translateStructure(row.structure) }} · {{ translateState(row.state) }}</span>
+          <span
+            class="mst-dot"
+            :class="row.status === 'Hostile' ? 'hostile' : 'friendly'"
+            :title="translateStatus(row.status)"
+          />
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+              flex: 1;
+              min-width: 0;
+            "
+          >
+            <span class="mst-name" style="font-weight: 700"
+              >{{ row.name
+              }}<span v-if="row.owner"> ({{ row.owner }})</span></span
+            >
+            <span
+              class="mst-struct"
+              style="font-size: 12px; color: var(--text-3)"
+              >{{ translateStructure(row.structure) }} ·
+              {{ translateState(row.state) }}</span
+            >
           </div>
-          <span class="mst-cd" :class="row.countdownCls">{{ row.countdown }}</span>
+          <span class="mst-cd" :class="row.countdownCls">{{
+            row.countdown
+          }}</span>
         </div>
       </div>
     </div>
@@ -1415,7 +1732,10 @@ watch(universePanBounds, () => {
   font-size: 14px;
   font-weight: 600;
   padding: 4px 8px;
-  transition: border-color 0.1s, color 0.1s, background 0.1s;
+  transition:
+    border-color 0.1s,
+    color 0.1s,
+    background 0.1s;
 }
 
 .map-breadcrumb-link:hover {
@@ -1542,6 +1862,49 @@ watch(universePanBounds, () => {
   font-size: 14px;
 }
 
+.map-scrub-controls {
+  display: grid;
+  grid-template-columns: auto auto minmax(180px, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 520px;
+  min-width: 280px;
+}
+
+.map-scrub-play:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.map-scrub-label {
+  color: var(--text-3);
+  font-size: 14px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.map-scrub-range {
+  width: 100%;
+  min-width: 0;
+  accent-color: var(--blue);
+}
+
+.map-scrub-range:disabled {
+  opacity: 0.55;
+}
+
+.map-scrub-time,
+.map-scrub-count {
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.map-scrub-count {
+  color: var(--text-3);
+}
+
 .map-wave-dot {
   width: 9px;
   height: 9px;
@@ -1649,13 +2012,13 @@ watch(universePanBounds, () => {
 }
 
 .map-action-meta {
-    .map-action-row .status-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 6px;
-    }
+  .map-action-row .status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+  }
 
   color: var(--text-3);
   font-size: 12px;
@@ -1695,7 +2058,11 @@ watch(universePanBounds, () => {
 }
 
 .map-region-canvas {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(0, 0, 0, 0.03));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.01),
+    rgba(0, 0, 0, 0.03)
+  );
   border: 1px solid var(--border);
   border-radius: 4px;
 }
@@ -1717,7 +2084,9 @@ watch(universePanBounds, () => {
 }
 
 .map-universe-links line {
-  transition: stroke 0.12s ease, opacity 0.12s ease;
+  transition:
+    stroke 0.12s ease,
+    opacity 0.12s ease;
 }
 
 .map-region-canvas g:hover > line {
@@ -1741,5 +2110,23 @@ watch(universePanBounds, () => {
     padding-right: 8px;
   }
 }
-</style>
 
+@media (max-width: 720px) {
+  .map-scrub-controls {
+    grid-template-columns: auto 1fr;
+  }
+
+  .map-scrub-label {
+    display: none;
+  }
+
+  .map-scrub-range {
+    grid-column: 1 / -1;
+  }
+
+  .map-scrub-time,
+  .map-scrub-count {
+    white-space: normal;
+  }
+}
+</style>
