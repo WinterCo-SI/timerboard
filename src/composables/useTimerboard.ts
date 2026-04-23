@@ -196,6 +196,10 @@ export const useTimerboard = defineStore('timerboard', () => {
       if (String(idVal) === 'NC' && name.includes('[ihub]')) continue;
       if (String(idVal) === 'Auth' && name.includes('(fraternity building management)')) continue;
       if (String(idVal) === 'Auth' && owner.includes('(fraternity building management)')) continue;
+      if (String(idVal) !== 'Sov' && struct.includes('sov')) continue;
+      if (String(idVal) !== 'Sov' && struct.includes('infra')) continue;
+      if (String(idVal) !== 'Sov' && struct.includes('ihub')) continue;
+      if (String(idVal) !== 'Sov' && struct.includes('i-hub')) continue;
       mapped.push(mappedItem);
     }
     // Normalize state values and deduplicate by normalized system|name|structure|state — keep earliest timer
