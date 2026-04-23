@@ -235,6 +235,7 @@ export function normalizeStructureName(raw: string): string {
     ['metenox moon drill', 'Metenox Moon Drill'],
     ['metenox', 'Metenox Moon Drill'],
     ['motonox moon drill', 'Metenox Moon Drill'],
+    ['MERC DEN', 'Mercenary Den'],
     ['moon drill', 'Metenox Moon Drill'],
     ['skyhhook', 'Orbital Skyhook'],
     ['skyhook', 'Orbital Skyhook'],
