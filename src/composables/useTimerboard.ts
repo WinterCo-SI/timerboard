@@ -57,6 +57,17 @@ type TimerDeletePayload = {
 };
 
 export const useTimerboard = defineStore('timerboard', () => {
+  // Small helper to decode basic HTML entities (covers common cases like &amp;, &lt;, &gt;, &quot;, &#39;)
+  function decodeHtmlEntities(input: string): string {
+    if (!input || typeof input !== 'string') return input;
+    return input
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+  }
+
   const now = ref(new Date());
   const currentView = ref<TimerView>('table');
   const isLightTheme = ref(false);
@@ -185,8 +196,12 @@ export const useTimerboard = defineStore('timerboard', () => {
     for (const item of rawList as any[]) {
       const mappedItem = mapApiTimer(item);
       if (!mappedItem) continue;
-      // Ad-hoc rule: discard Orbital Skyhook entries when item.id === 'Auth'
       const idVal = item?.id ?? '';
+      // When source id === 'Auth' some names are HTML-escaped (e.g. '&amp;'). Unescape them.
+      if (idVal === 'Auth' && typeof mappedItem.name === 'string' && mappedItem.name.includes('&')) {
+        mappedItem.name = decodeHtmlEntities(mappedItem.name);
+      }
+      // Ad-hoc rule: discard Orbital Skyhook entries when item.id === 'Auth'
       const struct = (mappedItem.structure || '').toLowerCase();
       const name = (mappedItem.name || '').toLowerCase();
       const status = (mappedItem.status || '').toLowerCase();
