@@ -121,6 +121,13 @@
   },
   "map": {
     "triage": "Triage",
+    "triagePresets": {
+      "all": "All timers",
+      "friendlySov": "Friendly sov",
+      "friendlyMajors": "Friendly majors",
+      "hostileMajors": "Hostile majors",
+      "keepstars": "Keepstars"
+    },
     "title": "Regional pressure map",
     "subtitle": "Wave-colored regions and system drilldown for active triage.",
     "empty": "No upcoming timers available for this triage preset.",

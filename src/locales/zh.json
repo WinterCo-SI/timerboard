@@ -118,6 +118,13 @@
   },
   "map": {
     "triage": "过滤",
+    "triagePresets": {
+      "all": "全部时刻",
+      "friendlySov": "友方主权",
+      "friendlyMajors": "友方重点建筑",
+      "hostileMajors": "敌方重点建筑",
+      "keepstars": "星城"
+    },
     "title": "区域压力地图",
     "subtitle": "按波次着色的星域，可点击查看星域详情。",
     "empty": "此过滤器没有即将到来的时刻。",

@@ -1149,7 +1149,7 @@ watch(universePanBounds, () => {
           :key="key"
           :value="key"
         >
-          {{ label }}
+          {{ t(`map.triagePresets.${key}`, { defaultValue: label }) }}
         </option>
       </select>
 
